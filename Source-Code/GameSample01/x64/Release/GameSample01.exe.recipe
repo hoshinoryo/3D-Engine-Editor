@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\GameSample01.exe</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_pixel_2d.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_pixel_3d.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_pixel_field.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_pixel_line.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_pixel_outline_post.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_pixel_picking.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_pixel_unlit.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_2d.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_3d.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_3d_skinned.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_3d_static.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_field.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_fullscreen.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_line.cso</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\GM11\GameSample05_3D\x64\Release\shader_vertex_picking.cso</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

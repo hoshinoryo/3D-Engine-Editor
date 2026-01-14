@@ -1,0 +1,9 @@
+.vs/
+.ipch/
+*.ipch
+*.db
+*.exe
+*.dll
+*.pack
+*.obj
+*.log
