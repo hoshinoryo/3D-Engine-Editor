@@ -14,8 +14,9 @@
 #include "picking_pass.h"
 #include "picking_shader.h"
 #include "direct3d.h"
-#include "model.h"
-#include "outliner.h"
+//#include "model.h"
+#include "model_asset.h"
+//#include "outliner.h"
 #include "axis_util.h"
 
 using namespace DirectX;
@@ -105,30 +106,29 @@ void PickingPass::End()
     m_StateGuard.End();
 }
 
-// Rendering
-void PickingPass::DrawModel(MODEL* model, const DirectX::XMMATRIX& world, uint32_t objectId)
+// Rendering (mesh-level)
+void PickingPass::DrawAsset(ModelAsset* asset, uint32_t meshIndex, const DirectX::XMMATRIX& world, uint32_t objectId)
 {
-    if (!model || !model->AiScene) return;
+    if (!asset || !asset->aiScene) return;
+    if (meshIndex >= asset->meshes.size()) return;
     assert(m_pContext);
 
-    XMMATRIX axisFix = GetAxisConversion(UpFromBool(model->SourceYup), UpAxis::Y_Up);
-    XMMATRIX importScale = XMMatrixScaling(model->Scale, model->Scale, model->Scale);
-    XMMATRIX finalWorld = importScale * axisFix * world;
+    //XMMATRIX axisFix = GetAxisConversion(UpFromBool(asset->sourceYup), UpAxis::Y_Up);
+    //XMMATRIX importScale = XMMatrixScaling(asset->importScale, asset->importScale, asset->importScale);
+    //XMMATRIX finalWorld = importScale * axisFix * world;
+    const XMMATRIX finalWorld = asset->importFix * world;
 
     m_PickingShader.SetParams(finalWorld, m_View, m_Proj, objectId);
 
-    for (unsigned int m = 0; m < model->AiScene->mNumMeshes; m++)
-    {
-        if (!Outliner::IsMeshVisible(model, (int)m)) continue;
+    MeshAsset& mesh = asset->meshes[meshIndex];
 
-        UINT stride = sizeof(Vertex3d);
-        UINT offset = 0;
+    UINT stride = sizeof(Vertex3d);
+    UINT offset = 0;
 
-        m_pContext->IASetVertexBuffers(0, 1, &model->VertexBuffer[m], &stride, &offset);
-        m_pContext->IASetIndexBuffer(model->IndexBuffer[m], DXGI_FORMAT_R32_UINT, 0);
+    m_pContext->IASetVertexBuffers(0, 1, &mesh.vertexBuffer, &stride, &offset);
+    m_pContext->IASetIndexBuffer(mesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-        m_pContext->DrawIndexed(model->AiScene->mMeshes[m]->mNumFaces * 3, 0, 0);
-    }
+    m_pContext->DrawIndexed(mesh.indexCount, 0, 0);
 }
 
 // From mouse coordinate to return object id

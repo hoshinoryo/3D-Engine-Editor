@@ -7,21 +7,27 @@
 
 ==============================================================================*/
 
+#include <unordered_set>
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "outliner.h"
 #include "texture.h"
 #include "skeleton_util.h"
-
-#include <cassert>
-#include <unordered_set>
+#include "scene_manager.h"
+#include "mesh_object.h"
+#include "model_asset.h"
 
 namespace Outliner
 {
+	/*
 	// Model status
 	struct PerModelState
 	{
 		std::vector<bool> meshVisible; // visibility for each mesh
 	};
-
+	
 	struct DrawerRegistry
 	{
 		DrawProc mesh = nullptr;
@@ -31,6 +37,7 @@ namespace Outliner
 		DrawProc material = nullptr;
 		DrawProc custom1 = nullptr;
 	};
+	*/
 
 	struct IconRegistry
 	{
@@ -53,33 +60,38 @@ namespace Outliner
 	};
 
 	// ---- ïœêîêÈåæ ----
-	static std::unordered_map<const MODEL*, PerModelState> g_state; // unordered_map = dictionary
+	//static std::unordered_map<const ModelAsset*, PerModelState> g_state; // unordered_map = dictionary
 
-	static const MODEL* g_selectedModel = nullptr;
-	static int g_selectedMesh = -1;
+	//static const ModelAsset* g_selectedModel = nullptr;
+	static uint32_t g_selectedObjectId = 0;
 
-	static DrawerRegistry g_drawers;
+	//static DrawerRegistry g_drawers;
 	static IconRegistry g_icons;
 
-	// ---- Inner tool function ----
-	//static void BuildNameToNodeMap(const aiNode* node, std::unordered_map<std::string, const aiNode*>& map);
-	static PerModelState& ensureState(const MODEL* model);
+	static ID3D11ShaderResourceView* IconSRV(ViewKind kind);
 
+	// ---- Inner tool function ----
+	//static PerModelState& ensureState(const ModelAsset* asset);
+
+	// Forward decl
 	static bool NodeHasMeshes(const aiNode* node);
 	static bool SubTreeHasMeshes(const aiScene* scene, const aiNode* node);
-	static void MeshNodeRow(const MODEL* model, const aiScene* scene, unsigned meshIdx);
-	static void MeshNodeProjected(const MODEL* model, const aiScene* scene, const aiNode* node);
+	static void MeshNodeRow(ModelAsset* asset, unsigned meshIdx);
+	static void MeshNodeProjected(ModelAsset* asset, const aiNode* node);
+	static void DrawSkeletonNode(ModelAsset* asset);
+	static void DrawSkeletonSubtree(const aiNode* node, const std::unordered_set<const aiNode*>& S);
 
-
-	inline void DispatchAllRegisteredDrawers(const MODEL* model, const aiScene* scene)
+	/*
+	inline void DispatchAllRegisteredDrawers(const ModelAsset* asset)
 	{
-		if (g_drawers.mesh)      g_drawers.mesh(model, scene);
-		if (g_drawers.skeleton)  g_drawers.skeleton(model, scene);
-		if (g_drawers.light)     g_drawers.light(model, scene);
-		if (g_drawers.camera)    g_drawers.camera(model, scene);
-		if (g_drawers.material)  g_drawers.material(model, scene);
-		if (g_drawers.custom1)   g_drawers.custom1(model, scene);
+		if (g_drawers.mesh)      g_drawers.mesh(asset);
+		if (g_drawers.skeleton)  g_drawers.skeleton(asset);
+		if (g_drawers.light)     g_drawers.light(asset);
+		if (g_drawers.camera)    g_drawers.camera(asset);
+		if (g_drawers.material)  g_drawers.material(asset);
+		if (g_drawers.custom1)   g_drawers.custom1(asset);
 	}
+	*/
 
 	static void BuildNameToNodeMap(const aiNode* node, std::unordered_map<std::string, const aiNode*>& map)
 	{
@@ -94,77 +106,28 @@ namespace Outliner
 		}
 	}
 
-	static PerModelState& ensureState(const MODEL* model)
-	{
-		auto it = g_state.find(model);
-
-		if (it == g_state.end())
-		{
-			// Model doesn't exist
-			PerModelState st;
-
-			if (model && model->AiScene)
-			{
-				st.meshVisible.assign(model->AiScene->mNumMeshes, true);
-			}
-			it = g_state.emplace(model, std::move(st)).first;
-		}
-		else
-		{
-			// Found the model
-			if (model && model->AiScene)
-			{
-				auto& vis = it->second.meshVisible;
-
-				if (vis.size() != model->AiScene->mNumMeshes)
-				{
-					vis.assign(model->AiScene->mNumMeshes, true);
-				}
-			}
-		}
-
-		return it->second;
-	}
-
+	/*
 	void SetDrawer(ViewKind kind, DrawProc fn)
 	{
 		switch (kind)
 		{
-		case Outliner::ViewKind::MESH:
-			g_drawers.mesh = fn;
-			break;
-		case Outliner::ViewKind::SKELETON:
-			g_drawers.skeleton = fn;
-			break;
-		case Outliner::ViewKind::LIGHT:
-			g_drawers.light = fn;
-			break;
-		case Outliner::ViewKind::CAMERA:
-			g_drawers.camera = fn;
-			break;
-		case Outliner::ViewKind::MATERIAL:
-			g_drawers.material = fn;
-			break;
-		case Outliner::ViewKind::CUSTOM1:
-			g_drawers.custom1 = fn;
-			break;
+		case ViewKind::MESH:     g_drawers.mesh = fn;     break;
+		case ViewKind::SKELETON: g_drawers.skeleton = fn; break;
+		case ViewKind::LIGHT:    g_drawers.light = fn;    break;
+		case ViewKind::CAMERA:   g_drawers.camera = fn;   break;
+		case ViewKind::MATERIAL: g_drawers.material = fn; break;
+		case ViewKind::CUSTOM1:  g_drawers.custom1 = fn;  break;
 		}
 	}
-
+	
 	void InitDefaultDrawers()
 	{
-		extern void DrawMeshNode(const MODEL*, const aiScene*);
-		extern void DrawSkeletonNode(const MODEL*, const aiScene*);
-
-		SetDrawer(ViewKind::MESH, DrawMeshNode);
+		SetDrawer(ViewKind::MESH,     DrawMeshNode);
 		SetDrawer(ViewKind::SKELETON, DrawSkeletonNode);
 	}
+	*/
 
-	bool InitIcons(
-		const wchar_t* meshIconPath,
-		const wchar_t* skeletonIconPath,
-		ImVec2 iconSize
-	)
+	bool InitIcons(const wchar_t* meshIconPath, const wchar_t* skeletonIconPath, ImVec2 iconSize)
 	{
 		g_icons.Release();
 
@@ -187,7 +150,7 @@ namespace Outliner
 		g_icons.Release();
 	}
 
-	ID3D11ShaderResourceView* IconSRV(ViewKind kind)
+	static ID3D11ShaderResourceView* IconSRV(ViewKind kind)
 	{
 		switch (kind)
 		{
@@ -214,27 +177,26 @@ namespace Outliner
 		}
 	}
 
-	// fbxÉtÉ@ÉCÉãÇ≤Ç∆Ç…èàóù
-	void Outliner::ShowSceneOutliner(const std::vector<MODEL*>& models)
+	// UI entry
+	void ShowSceneOutliner()
 	{
-		for (size_t mi = 0; mi < models.size(); ++mi)
+		const auto& assets = SceneManager::AllModelAssets();
+
+		for (size_t ai = 0; ai < assets.size(); ++ai)
 		{
-			const MODEL* model = models[mi];
+			ModelAsset* asset = assets[ai];
+			if (!asset || !asset->aiScene || !asset->aiScene->mRootNode) continue;
 
-			if (!model || !model->AiScene || !model->AiScene->mRootNode) continue;
+			ImGui::PushID((int)ai);
 
-			ensureState(model);
+			const char* title = "(asset)"; // default name label
 
-			ImGui::PushID((int)mi);
-
-			const char* title = "(model)"; // default name label
-
-			if (model->AiScene->mRootNode->mName.length > 0)
+			if (asset->aiScene->mRootNode->mName.length > 0)
 			{
-				title = model->AiScene->mRootNode->mName.C_Str();
+				title = asset->aiScene->mRootNode->mName.C_Str();
 			}
 
-			bool openModel = ImGui::TreeNodeEx(
+			bool open = ImGui::TreeNodeEx(
 				title,
 				ImGuiTreeNodeFlags_OpenOnArrow |
 				ImGuiTreeNodeFlags_OpenOnDoubleClick
@@ -244,71 +206,38 @@ namespace Outliner
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Show All"))
 			{
-				auto& st = ensureState(model);
-				std::fill(st.meshVisible.begin(), st.meshVisible.end(), true);
+				SceneManager::SetVisibleByAsset(asset, true);
 			}
 			ImGui::SameLine();
 			if (ImGui::SmallButton("Hide All"))
 			{
-				auto& st = ensureState(model);
-				std::fill(st.meshVisible.begin(), st.meshVisible.end(), false);
+				SceneManager::SetVisibleByAsset(asset, false);
 			}
 
-			if (openModel)
+			if (open)
 			{
-				//DrawMeshNode(model, model->AiScene);
-				DispatchAllRegisteredDrawers(model, model->AiScene);
+				// Mesh hierarchy
+				MeshNodeProjected(asset, asset->aiScene->mRootNode);
 
 				ImGui::TreePop();
 			}
 
 			ImGui::PopID();
-
 		}
 	}
 
-	bool Outliner::GetSelection(const MODEL*& model, int& meshIndex)
+	bool GetSelection(uint32_t& objectId)
 	{
-		model = g_selectedModel;
-		meshIndex = g_selectedMesh;
+		objectId = g_selectedObjectId;
 
-		return (model != nullptr && meshIndex >= 0);
+		return objectId != 0;
 	}
 
-	bool Outliner::IsMeshVisible(const MODEL* model, int meshIndex)
-	{
-		if (!model || !model->AiScene)
-		{
-			return true;
-		}
-
-		auto& st = ensureState(model);
-
-		if (meshIndex < 0 || (size_t)meshIndex >= st.meshVisible.size())
-		{
-			return true;
-		}
-
-		//return st.meshVisible[meshIndex];
-		return st.meshVisible.at(meshIndex);
-	}
-
-	void Outliner::SetMeshVisible(const MODEL* model, int meshIndex, bool visible)
-	{
-		if (!model || !model->AiScene) return;
-
-		auto& st = ensureState(model);
-
-		if (meshIndex < 0 || (size_t)meshIndex >= st.meshVisible.size()) return;
-
-		//st.meshVisible[meshIndex] = visible;
-		st.meshVisible.at(meshIndex) = visible;
-	}
-
+	/*
 	// NodeÇÃï`âÊ
-	void Outliner::DrawAiNode(const MODEL* model, const aiScene* scene, const aiNode* node)
+	void Outliner::DrawAiNode(const ModelAsset* asset, const aiNode* node)
 	{
-		if (!scene || !node) return;
+		if (!asset->aiScene || !node) return;
 
 		ImGui::PushID(node);
 
@@ -328,7 +257,7 @@ namespace Outliner
 		{
 			for (unsigned int c = 0; c < node->mNumChildren; ++c)
 			{
-				DrawAiNode(model, scene, node->mChildren[c]);
+				DrawAiNode(asset, node->mChildren[c]);
 			}
 
 			ImGui::TreePop();
@@ -336,54 +265,58 @@ namespace Outliner
 
 		ImGui::PopID();
 	}
-	
+	*/
 
 	// ---- Mesh node drawing ----
-	static void MeshNodeRow(const MODEL* model, const aiScene* scene, unsigned meshIdx)
+	static void MeshNodeRow(ModelAsset* asset, unsigned meshIdx)
 	{
-		if (!scene || meshIdx >= scene->mNumMeshes) return;
+		if (!asset || !asset->aiScene) return;
+		if (meshIdx >= asset->aiScene->mNumMeshes) return;
 
-		aiMesh* mesh = scene->mMeshes[meshIdx];
+		aiMesh* mesh = asset->aiScene->mMeshes[meshIdx];
 		if (!mesh) return;
+
+		MeshObject* obj = SceneManager::FindByAssetMesh(asset, meshIdx);
 
 		ImGui::PushID((int)meshIdx);
 
-		const bool selected = (g_selectedModel == model && g_selectedMesh == (int)meshIdx);
+		const bool hasObject = (obj != nullptr);
+		if (hasObject) ImGui::BeginDisabled(true);
 
-		// Visibility checkbox
-		bool vis = IsMeshVisible(model, (int)meshIdx);
+		bool vis = hasObject ? obj->visible : true;
 		if (ImGui::Checkbox("##vis", &vis))
 		{
-			SetMeshVisible(model, (int)meshIdx, vis);
+			obj->visible = vis;
 		}
 		ImGui::SameLine();
 
 		// Icon
-		Outliner::DrawIcon(Outliner::ViewKind::MESH);
+		DrawIcon(ViewKind::MESH);
 
 		// Mesh label
 		std::string meshLabel = (mesh->mName.length > 0) ?
 			mesh->mName.C_Str() :
 			("mesh[" + std::to_string(meshIdx) + "]");
 
+		const bool selected = hasObject && (g_selectedObjectId == obj->id);
 		if (ImGui::Selectable(meshLabel.c_str(), selected))
 		{
-			g_selectedModel = model;
-			g_selectedMesh = (int)meshIdx;
+			g_selectedObjectId = obj->id;
 		}
 
 		ImGui::SameLine();
 		ImGui::TextDisabled(" V: %u F:%u", mesh->mNumVertices, mesh->mNumFaces);
 
+		if (!hasObject) ImGui::EndDisabled();
+
 		ImGui::PopID();
 	}
 	
 	// Hierarcky projection for mesh node
-	static void MeshNodeProjected(const MODEL* model, const aiScene* scene, const aiNode* node)
+	static void MeshNodeProjected(ModelAsset* asset, const aiNode* node)
 	{
-		if (!scene || !node) return;
-
-		if (!SubTreeHasMeshes(scene, node)) return;
+		if (!asset || !asset->aiScene || !node) return;
+		if (!SubTreeHasMeshes(asset->aiScene, node)) return;
 
 		ImGui::PushID(node);
 
@@ -395,7 +328,7 @@ namespace Outliner
 		{
 			for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 			{
-				MeshNodeRow(model, scene, node->mMeshes[i]);
+				MeshNodeRow(asset, node->mMeshes[i]);
 			}
 		}
 		else
@@ -410,7 +343,7 @@ namespace Outliner
 			{
 				for (unsigned int c = 0; c < node->mNumChildren; ++c)
 				{
-					MeshNodeProjected(model, scene, node->mChildren[c]);
+					MeshNodeProjected(asset, node->mChildren[c]);
 				}
 
 				ImGui::TreePop();
@@ -420,12 +353,36 @@ namespace Outliner
 		ImGui::PopID();
 	}
 
-	void DrawMeshNode(const MODEL* model, const aiScene* scene)
+	void DrawMeshNode(ModelAsset* asset)
 	{
-		if (!model || !scene || !scene->mRootNode) return;
+		if (!asset || !asset->aiScene || !asset->aiScene->mRootNode) return;
 
-		ensureState(model);
-		MeshNodeProjected(model, scene, scene->mRootNode);
+		MeshNodeProjected(asset, asset->aiScene->mRootNode);
+	}
+
+	static void DrawSkeletonNode(ModelAsset* asset)
+	{
+		if (!asset || !asset->aiScene || !asset->aiScene->mRootNode) return;
+
+		// 1. Collect all binded bones
+		SkeletonUtil::BoneNameSet boneNames;
+		SkeletonUtil::BuildSkeletonNameSet(asset->aiScene, boneNames);
+		if (boneNames.empty()) return;
+
+		// 2. Build closure S(bones and their parents, without mRootNode)
+		SkeletonUtil::NodeSet skelSet;
+		SkeletonUtil::BuildSkeletonClosure(asset->aiScene, boneNames, skelSet);
+		if (skelSet.empty()) return;
+
+		// 3. Find all skeleton tree roots
+		std::vector<const aiNode*> roots;
+		SkeletonUtil::FindSkeletonRoots(asset->aiScene, skelSet, roots);
+
+		// 4. Draw skeleton hierarchy
+		for (const aiNode* r : roots)
+		{
+			DrawSkeletonSubtree(r, skelSet);
+		}
 	}
 
 	static bool NodeHasMeshes(const aiNode* node)
@@ -446,9 +403,7 @@ namespace Outliner
 	}
 
 
-
 	// ---- Skeleton node drawing ----
-
 	static void DrawSkeletonSubtree(const aiNode* node, const std::unordered_set<const aiNode*>& S)
 	{
 		if (!node || !S.count(node)) return;
@@ -460,13 +415,13 @@ namespace Outliner
 
 		if (!hasChild) // leave
 		{
-			Outliner::DrawIcon(Outliner::ViewKind::SKELETON);
+			DrawIcon(ViewKind::SKELETON);
 			ImGui::SameLine();
 			ImGui::TextUnformatted(label);
 		}
 		else
 		{
-			Outliner::DrawIcon(Outliner::ViewKind::SKELETON);
+			DrawIcon(ViewKind::SKELETON);
 			ImGui::SameLine(0.0f, 0.0f);
 
 			ImGuiTreeNodeFlags flags =
@@ -482,36 +437,9 @@ namespace Outliner
 					if (S.count(ch))
 						DrawSkeletonSubtree(ch, S);
 				}
-
 				ImGui::TreePop();
 			}
 		}
-
 		ImGui::PopID();
-	}
-
-	void DrawSkeletonNode(const MODEL* model, const aiScene* scene)
-	{
-		if (!model || !scene || !scene->mRootNode) return;
-
-		// 1. Collect all binded bones
-		SkeletonUtil::BoneNameSet boneNames;
-		SkeletonUtil::BuildSkeletonNameSet(scene, boneNames);
-		if (boneNames.empty()) return;
-
-		// 2. Build closure S(bones and their parents, without mRootNode)
-		SkeletonUtil::NodeSet skelSet;
-		SkeletonUtil::BuildSkeletonClosure(scene, boneNames, skelSet);
-		if (skelSet.empty()) return;
-		
-		// 3. Find all skeleton tree roots
-		std::vector<const aiNode*> roots;
-		SkeletonUtil::FindSkeletonRoots(scene, skelSet, roots);
-
-		// 4. Draw skeleton hierarchy
-		for (const aiNode* r : roots)
-		{
-			DrawSkeletonSubtree(r, skelSet);
-		}
 	}
 }

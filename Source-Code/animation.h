@@ -29,7 +29,7 @@ AnimationClip
 └─ tracks[]: ボーンのアニメーションデータ
 
 AnimationPlayer
-├─ Play()：指定された AnimationClip と MODEL を再生開始する
+├─ Play()：指定されたAnimationClipとModelAssetを再生開始する
 ├─ Update()：アニメーション更新
 ├─ SampleLocalTransform() : 1ボーンに対して「ローカル変換行列」を生成する
 ├─ BuildModelSpacePoseRecursive() : 全ボーンの「モデル空間での姿勢行列」を構築する
@@ -74,7 +74,7 @@ struct AnimationClip
 };
 
 // アニメーションの読み込み
-AnimationClip* Animation_LoadFromFile(const char* filename, const MODEL* model, bool animYup);
+AnimationClip* Animation_LoadFromFile(const char* filename, const ModelAsset* asset, bool animYup);
 void Animation_DestroyClip(AnimationClip* clip);
 
 
@@ -109,7 +109,7 @@ class AnimationPlayer
 {
 private:
 
-	const MODEL* m_Model = nullptr;
+	const ModelAsset* m_Asset = nullptr;
 	const AnimationClip* m_Clip = nullptr;
 	bool m_Playing = false;
 	bool m_Loop = true;
@@ -132,15 +132,15 @@ public:
 
 	AnimationPlayer();
 
-	void Play(const AnimationClip* clip, const MODEL* model, bool loop = true, double startTimeSec = 0.0);
+	void Play(const AnimationClip* clip, const ModelAsset* asset, bool loop = true, double startTimeSec = 0.0);
 
 	void Stop();
 
 	void Update(double elapsed_time);
 
-	bool IsPLaying() const { return m_Playing && m_Clip && m_Model; }
+	bool IsPLaying() const { return m_Playing && m_Clip && m_Asset; }
 
-	const MODEL* GetModel();
+	const ModelAsset* GetAsset();
 	const AnimationClip* GetCurrentClip() const { return m_Clip; }
 	double GetCurrentTimeSec() const;
 	void GetCurrentPose(std::unordered_map<const aiNode*, DirectX::XMMATRIX>& outPose) const;

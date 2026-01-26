@@ -33,6 +33,8 @@ D:\GM11\GameSample05_3D\light.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug
 D:\GM11\GameSample05_3D\line_shader.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\line_shader.obj
 D:\GM11\GameSample05_3D\main.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\main.obj
 D:\GM11\GameSample05_3D\model.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\model.obj
+D:\GM11\GameSample05_3D\model_asset.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\model_asset.obj
+D:\GM11\GameSample05_3D\model_renderer.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\model_renderer.obj
 D:\GM11\GameSample05_3D\mode_management.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\mode_management.obj
 D:\GM11\GameSample05_3D\mouse.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\mouse.obj
 D:\GM11\GameSample05_3D\orbit_camera.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\orbit_camera.obj

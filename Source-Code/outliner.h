@@ -10,12 +10,15 @@
 #ifndef OUTLINER_H
 #define OUTLINER_H
 
-#include <vector>
-#include <unordered_map>
-#include <string>
+//#include <vector>
+//#include <unordered_map>
+//#include <string>
+#include <cstdint>
 
-#include "model.h"
+//#include "model_asset.h"
 #include "imgui/imgui.h"
+
+struct ModelAsset;
 
 namespace Outliner
 {
@@ -29,11 +32,11 @@ namespace Outliner
 		CUSTOM1
 	};
 
-	using DrawProc = void(*)(const MODEL* model, const aiScene* scene);
+	using DrawProc = void(*)(const ModelAsset* asset);
 	
 	// Drawer reigister function
-	void SetDrawer(ViewKind kind, DrawProc fn);
-	void InitDefaultDrawers();
+	//void SetDrawer(ViewKind kind, DrawProc fn);
+	//void InitDefaultDrawers();
 
 	// Icon function
 	bool InitIcons(
@@ -42,27 +45,23 @@ namespace Outliner
 		ImVec2 iconSize = ImVec2(16, 16)
 	);
 	void ShutdownIcons();
-	ID3D11ShaderResourceView* IconSRV(ViewKind kind); // get icon from the type
 	void DrawIcon(ViewKind kind);
 
 	// Show Outliner
-	void ShowSceneOutliner(const std::vector<MODEL*>& models);
+	void ShowSceneOutliner();
 
-	bool GetSelection(const MODEL*& model, int& meshIndex);
-	bool IsMeshVisible(const MODEL* model, int meshIndex);
-	void SetMeshVisible(const MODEL* model, int meshIndex, bool visible);
+	bool GetSelection(uint32_t& objectId);
+	//bool IsMeshVisible(const ModelAsset* asset, int meshIndex);
+	//void SetMeshVisible(const ModelAsset* asset, int meshIndex, bool visible);
 
 	// ---- Draw Outliner ----
-	void DrawAiNode(const MODEL* model, const aiScene* scene, const aiNode* node);
+	//void DrawAiNode(const ModelAsset* asset, const aiNode* node);
 
 	// Mesh
-	void DrawMeshNode(const MODEL* model, const aiScene* scene);
+	//void DrawMeshNode(const ModelAsset* asset);
 
 	// Skeleton
-	void DrawSkeletonNode(const MODEL* model, const aiScene* scene);
-	
+	//void DrawSkeletonNode(const ModelAsset* asset);	
 }
-
-
 
 #endif // !OUTLINER_H

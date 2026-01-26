@@ -13,7 +13,8 @@
 #include "assimp/postprocess.h"
 
 #include "animation.h"
-#include "model.h"
+//#include "model.h"
+#include "model_asset.h"
 #include "skeleton_util.h"
 #include "axis_util.h"
 #include "direct3d.h"
@@ -53,7 +54,7 @@ static void SlerpQuat(const XMFLOAT4& qa, const XMFLOAT4& qb, float t, XMFLOAT4&
 
 static BoneAnimTrack CreateBoneAnimationFromChannel(
 	const aiNodeAnim* channel,
-	const MODEL* model,
+	const ModelAsset* asset,
 	const aiScene* scene,
 	double& outMaxTime
 );
@@ -70,11 +71,11 @@ static const char* GetShortName(const char* fullName);
 
 
 // ---- “Ç‚Ýž‚Ý ----
-AnimationClip* Animation_LoadFromFile(const char* filename, const MODEL* model, bool animYup)
+AnimationClip* Animation_LoadFromFile(const char* filename, const ModelAsset* asset, bool animYup)
 {
 	assert(filename);
-	assert(model);
-	assert(model->AiScene);
+	assert(asset);
+	assert(asset->aiScene);
 
 	//Assimp::Importer importer;
 
@@ -107,7 +108,7 @@ AnimationClip* Animation_LoadFromFile(const char* filename, const MODEL* model, 
 		const aiNodeAnim* channel = anim->mChannels[i];
 		if (!channel) continue;
 
-		BoneAnimTrack track = CreateBoneAnimationFromChannel(channel, model, model->AiScene, durationFromKey);
+		BoneAnimTrack track = CreateBoneAnimationFromChannel(channel, asset, asset->aiScene, durationFromKey);
 
 		clip->tracks.push_back(std::move(track));
 	}
@@ -252,17 +253,17 @@ AnimationPlayer::AnimationPlayer()
 	m_Playing = false;
 	m_Loop = true;
 	m_CurrentTimeTicks = 0.0;
-	m_Model = nullptr;
+	m_Asset = nullptr;
 	m_Clip = nullptr;
 }
 
-void AnimationPlayer::Play(const AnimationClip* clip, const MODEL* model, bool loop, double startTimeSec)
+void AnimationPlayer::Play(const AnimationClip* clip, const ModelAsset* asset, bool loop, double startTimeSec)
 {
 	m_Clip = clip;
-	m_Model = model;
+	m_Asset = asset;
 	m_Loop = loop;
 
-	if (!m_Clip || !m_Model)
+	if (!m_Clip || !m_Asset)
 	{
 		m_Playing = false;
 		m_CurrentTimeTicks = 0.0;
@@ -319,9 +320,9 @@ void AnimationPlayer::Update(double elapsed_time)
 	}
 }
 
-const MODEL* AnimationPlayer::GetModel()
+const ModelAsset* AnimationPlayer::GetAsset()
 {
-	return m_Model;
+	return m_Asset;
 }
 
 double AnimationPlayer::GetCurrentTimeSec() const
@@ -417,9 +418,9 @@ void AnimationPlayer::ComputeSkinMatrices(std::vector<DirectX::XMFLOAT4X4>& outB
 {
 	outBoneMatrix.clear();
 
-	if (!m_Model || !m_Clip || !m_Model->AiScene) return;
+	if (!m_Asset || !m_Clip || !m_Asset->aiScene) return;
 
-	const aiScene* scene = m_Model->AiScene;
+	const aiScene* scene = m_Asset->aiScene;
 
 	// 1. Build aiNode and its model matrix
 	std::unordered_map<const aiNode*, XMMATRIX> nodeModelMtx;
@@ -427,9 +428,9 @@ void AnimationPlayer::ComputeSkinMatrices(std::vector<DirectX::XMFLOAT4X4>& outB
 
 	
 	// Z-up tp Y-up
-	if (m_Model && m_Clip)
+	if (m_Asset && m_Clip)
 	{
-		UpAxis modelUp = UpFromBool(m_Model->SourceYup);
+		UpAxis modelUp = UpFromBool(m_Asset->sourceYup);
 		UpAxis animUp = UpFromBool(m_Clip->SourceYup);
 
 		if (animUp != modelUp)
@@ -445,7 +446,7 @@ void AnimationPlayer::ComputeSkinMatrices(std::vector<DirectX::XMFLOAT4X4>& outB
 	m_CurrentPose = nodeModelMtx; // save the pose
 
 	// 2. Collect all bones and make a table for name and index
-	const auto& boneMap = m_Model->BoneNameToIndex;
+	const auto& boneMap = m_Asset->boneNameToIndex;
 	if (boneMap.empty()) 
 		return;
 
@@ -581,7 +582,7 @@ static XMMATRIX GetAxisFixMatrix(bool yUp)
 
 static BoneAnimTrack CreateBoneAnimationFromChannel(
 	const aiNodeAnim* channel,
-	const MODEL* model,
+	const ModelAsset* asset,
 	const aiScene* scene,
 	double& outMaxTime
 )

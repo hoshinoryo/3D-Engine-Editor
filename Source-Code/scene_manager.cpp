@@ -13,84 +13,125 @@
 
 namespace
 {
-	std::vector<SceneObject> g_objects;
-	std::vector<MODEL*> g_modelsUniqueCache;
-	bool g_modelsDirty = true;
-
+	std::vector<MeshObject> g_meshObjects;
+	std::vector<ModelAsset*> g_assetsUniqueCache;
+	bool g_assetsDirty = true;
 	uint32_t g_nextId = 1;
 
-	void MarkModelsDirty() { g_modelsDirty = true; }
-
-	void RebuildModelsCache()
+	void MarkAssetsDirty()
 	{
-		g_modelsUniqueCache.clear();
+		g_assetsDirty = true; // asset list need to rebuild
+	}
 
-		for (auto& o : g_objects)
+	void RebuildAssetsCache()
+	{
+		g_assetsUniqueCache.clear();
+
+		for (auto& o : g_meshObjects)
 		{
-			if (!o.model) continue;
-			if (std::find(g_modelsUniqueCache.begin(), g_modelsUniqueCache.end(), o.model) == g_modelsUniqueCache.end())
-				g_modelsUniqueCache.push_back(o.model);
+			if (!o.asset) continue;
+
+			auto it = std::find(g_assetsUniqueCache.begin(), g_assetsUniqueCache.end(), o.asset);
+			if (it == g_assetsUniqueCache.end())
+				g_assetsUniqueCache.push_back(o.asset);
 		}
 
-		g_modelsDirty = false;
+		g_assetsDirty = false;
 	}
 }
 
 namespace SceneManager
 {
-	uint32_t RegisterObject(MODEL* model, const DirectX::XMMATRIX& world, bool pickable)
+	uint32_t RegisterMeshObject(ModelAsset* asset, uint32_t meshIndex, const TransformTRS& trs, bool pickable)
 	{
-		if (!model) return 0;
+		if (!asset) return 0;
+		if (meshIndex >= asset->meshes.size()) return 0;
 
-		SceneObject o;
+		MeshObject o;
 		o.id = g_nextId++;
-		o.model = model;
-		o.world = world;
+		o.asset = asset;
+		o.meshIndex = meshIndex;
+		o.transform = trs;
+		o.visible = true;
 		o.pickable = pickable;
 
-		g_objects.push_back(o);
-		MarkModelsDirty();
+		o.name = "Mesh_" + std::to_string(meshIndex);
+
+		g_meshObjects.push_back(o);
+		MarkAssetsDirty();
 
 		return o.id;
 	}
 
-	void UnregisterObject(uint32_t objectId)
+	void UnregisterMeshObject(uint32_t objectId)
 	{
-		auto it = std::remove_if(g_objects.begin(), g_objects.end(),
-			[objectId](const SceneObject& o) { return o.id == objectId; });
-		if (it != g_objects.end())
+		auto it = std::remove_if(
+			g_meshObjects.begin(),
+			g_meshObjects.end(),
+			[objectId](const MeshObject& o) { return o.id == objectId; }
+		);
+		if (it != g_meshObjects.end())
 		{
-			g_objects.erase(it, g_objects.end());
-			MarkModelsDirty();
+			g_meshObjects.erase(it, g_meshObjects.end());
+			MarkAssetsDirty();
 		}
 	}
 
-	SceneObject* FindObject(uint32_t objectId)
+	MeshObject* FindMeshObject(uint32_t objectId)
 	{
-		for (auto& o : g_objects)
+		for (auto& o : g_meshObjects)
 		{
 			if (o.id == objectId) return &o;
 		}
-		
 		return nullptr;
 	}
 
-	const std::vector<SceneObject>& AllObjects()
+	MeshObject* FindByAssetMesh(ModelAsset* asset, uint32_t meshIndex)
 	{
-		return g_objects;
+		for (auto& o : g_meshObjects)
+		{
+			if (o.asset == asset && o.meshIndex == meshIndex)
+				return &o;
+		}
+		return nullptr;
 	}
 
-	const std::vector<MODEL*>& AllModels()
+	// for picking pass (mesh)
+	const std::vector<MeshObject>& AllObjects()
 	{
-		if (g_modelsDirty) RebuildModelsCache();
-		return g_modelsUniqueCache;
+		return g_meshObjects;
+	}
+
+	// for outliner (model asset)
+	const std::vector<ModelAsset*>& AllModelAssets()
+	{
+		if (g_assetsDirty) RebuildAssetsCache();
+		return g_assetsUniqueCache;
+	}
+
+	void SetVisibleByAsset(ModelAsset* asset, bool visible)
+	{
+		for (auto& o : g_meshObjects)
+		{
+			if (o.asset == asset)
+				o.visible = visible;
+		}
+	}
+
+	void SetPickableByAsset(ModelAsset* asset, bool pickable)
+	{
+		for (auto& o : g_meshObjects)
+		{
+			if (o.asset == asset)
+				o.pickable = pickable;
+		}
 	}
 
 	void Clear()
 	{
-		g_objects.clear();
-		g_modelsUniqueCache.clear();
-		g_modelsDirty = false;
+		g_meshObjects.clear();
+		g_assetsUniqueCache.clear();
+		g_assetsDirty = false;
 		g_nextId = 1;
 	}
 }

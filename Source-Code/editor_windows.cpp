@@ -55,30 +55,26 @@ namespace
 				ImGuiWindowFlags_AlwaysVerticalScrollbar
 			);
 
-			const auto& sceneModels = SceneManager::AllModels();
+			const auto& sceneAssets = SceneManager::AllModelAssets();
 
 			if (ImGui::Button("Show All"))
 			{
-				for (auto* m : sceneModels)
+				for (auto* asset : sceneAssets)
 				{
-					auto count = m && m->AiScene ? m->AiScene->mNumMeshes : 0u;
-					for (unsigned i = 0; i < count; ++i)
-						Outliner::SetMeshVisible(m, (int)i, true);
+					SceneManager::SetVisibleByAsset(asset, true);
 				}
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Hide All"))
 			{
-				for (auto* m : sceneModels)
+				for (auto* asset : sceneAssets)
 				{
-					auto count = m && m->AiScene ? m->AiScene->mNumMeshes : 0u;
-					for (unsigned i = 0; i < count; ++i)
-						Outliner::SetMeshVisible(m, (int)i, false);
+					SceneManager::SetVisibleByAsset(asset, false);
 				}
 			}
 			ImGui::Separator();
 
-			Outliner::ShowSceneOutliner(sceneModels);
+			Outliner::ShowSceneOutliner();
 
 			ImGui::EndChild();
 			ImGui::End();
@@ -172,7 +168,7 @@ namespace EditorWindows
 {
 	void InitializeResources()
 	{
-		Outliner::InitDefaultDrawers();
+		//Outliner::InitDefaultDrawers();
 		Outliner::InitIcons(
 			L"resources/mesh.png",
 			L"resources/skeleton.png",

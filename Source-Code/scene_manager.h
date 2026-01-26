@@ -12,31 +12,23 @@
 
 #include <vector>
 #include <cstdint>
-#include <DirectXMath.h>
 
-#include "model.h"
-
-struct SceneObject
-{
-	uint32_t id = 0; // 0 for none
-	MODEL* model = nullptr;
-	DirectX::XMMATRIX world = DirectX::XMMatrixIdentity();
-	bool visible = true;
-	bool pickable = true;
-};
+#include "model_asset.h"
+#include "mesh_object.h"
 
 namespace SceneManager
 {
-	uint32_t RegisterObject(MODEL* model, const DirectX::XMMATRIX& world, bool pickable = true);
+	uint32_t RegisterMeshObject(ModelAsset* asset,uint32_t meshIndex, const TransformTRS& trs, bool pickable = true);
+	void UnregisterMeshObject(uint32_t objectId);
 
-	void UnregisterObject(uint32_t objectId);
-	SceneObject* FindObject(uint32_t objectId);
+	MeshObject* FindMeshObject(uint32_t objectId);
+	MeshObject* FindByAssetMesh(ModelAsset* asset, uint32_t meshIndex);
 
-	// Object list
-	const std::vector<SceneObject>& AllObjects();
+	const std::vector<MeshObject>& AllObjects();
+	const std::vector<ModelAsset*>& AllModelAssets();
 
-	// For outliner UI (models unique list)
-	const std::vector<MODEL*>& AllModels();
+	void SetVisibleByAsset(ModelAsset* asset, bool visible);
+	void SetPickableByAsset(ModelAsset* asset, bool pickable);
 
 	void Clear();
 }

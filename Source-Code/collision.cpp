@@ -13,7 +13,8 @@
 #include "line_shader.h"
 #include "debug_ostream.h"
 #include "draw3d.h"
-#include "model.h"
+#include "model_asset.h"
+#include "model_renderer.h"
 #include "axis_util.h"
 
 #include <algorithm>
@@ -322,17 +323,22 @@ void CollisionSystem::AddStaticAABB(const AABB& aabb)
 	g_Statics.push_back(aabb);
 }
 
-void CollisionSystem::AddStaticModel(const MODEL* model, const DirectX::XMMATRIX& objWorld)
+void CollisionSystem::AddStaticModel(const ModelAsset* asset, const XMMATRIX& objWorld)
 {
-	if (!model) return;
+	if (!asset) return;
 
-	XMMATRIX axisFix = GetAxisConversion(UpFromBool(model->SourceYup), UpAxis::Y_Up);
-	XMMATRIX importScale = XMMatrixScaling(model->Scale, model->Scale, model->Scale);
+	/*
+	XMMATRIX axisFix = GetAxisConversion(UpFromBool(asset->sourceYup), UpAxis::Y_Up);
+	XMMATRIX importScale = XMMatrixScaling(asset->importScale, asset->importScale, asset->importScale);
 	XMMATRIX finalWorld = importScale * axisFix * objWorld;
+	*/
+	const XMMATRIX finalWorld = asset->importFix * objWorld;
 
-	AABB worldAABB = Collision_TransformAABB(model->localAABB, finalWorld);
-
-	AddStaticAABB(worldAABB);
+	for (const MeshAsset& mesh : asset->meshes)
+	{
+		AABB worldAABB = Collision_TransformAABB(mesh.localAABB, finalWorld);
+		AddStaticAABB(worldAABB);
+	}
 }
 
 // Resolves collisions between the player's AABB and static AABBs

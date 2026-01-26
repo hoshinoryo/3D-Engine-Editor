@@ -6,6 +6,7 @@
 --------------------------------------------------------------------------------
 
 ==============================================================================*/
+
 #include "game.h"
 #include "cube.h"
 #include "grid.h"
@@ -13,7 +14,8 @@
 #include "sampler.h"
 #include "direct3d.h"
 #include "light.h"
-#include "model.h"
+#include "model_asset.h"
+#include "model_renderer.h"
 #include "player.h"
 #include "skydome.h"
 #include "default3Dshader.h"
@@ -48,8 +50,8 @@ static OutlinePostPass g_OutlinePost;
 static bool g_OutlineReady = false;
 
 
-static MODEL* g_modelTest2 = nullptr;
-static MODEL* g_modelMaterial = nullptr;
+static ModelAsset* g_modelTest2 = nullptr;
+static ModelAsset* g_modelMaterial = nullptr;
 
 static Player g_Player;
 
@@ -77,8 +79,8 @@ void Game_Initialize()
     g_LightManager.SetPointLight(0, { 0.0f, 3.0f, -2.0f }, 5.0f, { 1.0f, 0.0f, 0.0f });
 
     // Model import
-    g_modelTest2 = ModelLoad("resources/oldfurniture/Chair02.fbx", false, 4.0f);
-    g_modelMaterial = ModelLoad("resources/materialTestBall.fbx", true, 1.0f);
+    g_modelTest2 = ModelAsset_Load("resources/oldfurniture/Chair02.fbx", false, 4.0f);
+    g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 1.0f);
 
     SceneManager::Clear();
     CollisionSystem::ClearStatics();
@@ -86,15 +88,23 @@ void Game_Initialize()
 
     if (g_modelTest2)
     {
-        XMMATRIX w1 = XMMatrixTranslation(0, 0, 3);
-        SceneManager::RegisterObject(g_modelTest2, w1, true);
-        CollisionSystem::AddStaticModel(g_modelTest2, w1);
+        TransformTRS trs;
+        trs.position = { 0.0f, 0.0f, 3.0f }; // test position
+
+        for (uint32_t mi = 0; mi < (uint32_t)g_modelTest2->meshes.size(); ++mi)
+        {
+            uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
+        }
     }
     if (g_modelMaterial)
     {
-        XMMATRIX w2 = XMMatrixTranslation(-3, 2, 5);
-        SceneManager::RegisterObject(g_modelMaterial, w2, true);
-        CollisionSystem::AddStaticModel(g_modelMaterial, w2);
+        TransformTRS trs;
+        trs.position = { -3.0f, 2.0f, 5.0f }; // test position
+
+        for (uint32_t mi = 0; mi < (uint32_t)g_modelMaterial->meshes.size(); ++mi)
+        {
+            uint32_t id = SceneManager::RegisterMeshObject(g_modelMaterial, mi, trs, true);
+        }
     }
     
     // Skeleton import
@@ -126,8 +136,8 @@ void Game_Finalize()
 
     Skydome_Finalize();
 
-    ModelRelease(g_modelMaterial);
-    ModelRelease(g_modelTest2);
+    ModelAsset_Release(g_modelMaterial);
+    ModelAsset_Release(g_modelTest2);
     
     CameraManager::Finalize();
 }
@@ -178,8 +188,10 @@ void Game_Draw()
 
         for (const auto& obj : SceneManager::AllObjects())
         {
-            if (!obj.visible || !obj.pickable || !obj.model) continue;
-            g_PickingPass.DrawModel(obj.model, obj.world, obj.id);
+            if (!obj.visible || !obj.pickable || !obj.asset) continue;
+
+            const XMMATRIX world = obj.transform.ToMatrix();
+            g_PickingPass.DrawAsset(obj.asset, obj.meshIndex, world, obj.id);
         }
 
         g_PickingPass.End();
@@ -202,9 +214,10 @@ void Game_Draw()
     // Draw all objects
     for (auto& obj : SceneManager::AllObjects())
     {
-        if (!obj.visible || !obj.model) continue;
+        if (!obj.visible || !obj.asset) continue;
 
-        ModelDraw(obj.model, obj.world, camPos);
+        const XMMATRIX world = obj.transform.ToMatrix();
+        ModelRenderer_Draw(obj.asset, obj.meshIndex, world, camPos);
 
 /*
 #if defined(DEBUG) || defined(_DEBUG)
@@ -213,7 +226,7 @@ void Game_Draw()
 */
         if (DebugDraw_Allow(DebugDrawCategory::Collision))
         {
-            Collision_DebugDraw(obj.model->worldAABB, { 0.0f, 0.0f, 1.0f, 1.0f });
+            Collision_DebugDraw(obj.asset->meshes[obj.meshIndex].localAABB, {0.0f, 0.0f, 1.0f, 1.0f});
         }
     }
 

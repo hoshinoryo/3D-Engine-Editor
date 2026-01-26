@@ -16,7 +16,7 @@
 
 #include "aabb_provider.h"
 
-struct MODEL;
+struct ModelAsset;
 
 struct Sphere
 {
@@ -72,7 +72,7 @@ namespace CollisionSystem
 	std::vector<AABB> AllStatics();
 	void ClearStatics();
 	void AddStaticAABB(const AABB& aabb);
-	void AddStaticModel(const MODEL* model, const DirectX::XMMATRIX& objWorld);
+	void AddStaticModel(const ModelAsset* asset, const DirectX::XMMATRIX& objWorld);
 
 	bool ResolveAgainstStatic(
 		const IAABBProvider& playerAABBProvider,

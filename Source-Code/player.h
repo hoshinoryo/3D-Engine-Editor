@@ -17,7 +17,7 @@
 #include "collision.h"
 #include "aabb_provider.h"
 
-struct MODEL;
+struct ModelAsset;
 
 enum class AnimState
 {
@@ -68,7 +68,6 @@ private:
 	float m_MoveSpeed = 8.0f;
 	float m_Gravity = 9.8f * 10.0f;
 	float m_JumpVelocity = 40.0f;
-	//float m_GroundY = 0.0f;
 
 	// Fall judgement
 	bool m_WasGround = false;
@@ -77,7 +76,7 @@ private:
 	float m_FallAnimThredhold = 8.0f;
 	float m_FallSpeedThredhold = -0.5f;
 
-	MODEL* m_Model = nullptr;
+	ModelAsset* m_Asset = nullptr;
 	AABB m_LocalAABB{};
 	AABB m_WorldAABB{};
 

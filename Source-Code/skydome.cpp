@@ -9,7 +9,8 @@
 ==============================================================================*/
 
 #include "skydome.h"
-#include "model.h"
+#include "model_asset.h"
+#include "model_renderer.h"
 #include "unlit_shader.h"
 #include "direct3d.h"
 
@@ -17,23 +18,19 @@
 
 using namespace DirectX;
 
-static MODEL* g_pModelSky{nullptr};
+static ModelAsset* g_pModelSky{nullptr};
 static XMFLOAT3 g_Position{};
 
 //static UnlitShader g_SkydomeShader;
 
 void Skydome_Initialize()
 {
-	//g_SkydomeShader.Initialize();
-
-	g_pModelSky = ModelLoad("resources/sky.fbx", false, 100.0f);
+	g_pModelSky = ModelAsset_Load("resources/sky.fbx", false, 100.0f);
 }
 
 void Skydome_Finalize()
 {
-	ModelRelease(g_pModelSky);
-
-	//g_SkydomeShader.Finalize();
+	ModelAsset_Release(g_pModelSky);
 }
 
 void Skydome_SetPosition(const DirectX::XMFLOAT3& position)
@@ -45,7 +42,10 @@ void Skydome_Draw()
 {
 	Direct3D_BeginSkydome();
 
-	ModelUnlitDraw(g_pModelSky, XMMatrixTranslationFromVector(XMLoadFloat3(&g_Position)), { 1.0f, 1.0f, 1.0f, 1.0f });
+	for (uint32_t mi = 0; mi < (uint32_t)g_pModelSky->meshes.size(); ++mi)
+	{
+		ModelRenderer_UnlitDraw(g_pModelSky, mi, XMMatrixTranslationFromVector(XMLoadFloat3(&g_Position)), { 1.0f, 1.0f, 1.0f, 1.0f });
+	}
 
 	Direct3D_EndSkydome();
 }

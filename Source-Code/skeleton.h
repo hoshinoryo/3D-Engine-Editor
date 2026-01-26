@@ -16,8 +16,6 @@
 void Skeleton_Initialize();
 void Skeleton_Finalize();
 
-void Skeleton_Draw(const DirectX::XMMATRIX & mtxWorld);
-
-//void BuildNodeWorldMatrices(const aiNode* node, const DirectX::XMMATRIX& parentWorld, std::unordered_map<const aiNode*, DirectX::XMMATRIX>& nodeWorlds);
+void Skeleton_Draw();
 
 #endif // SKELETON_H

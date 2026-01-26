@@ -9,7 +9,9 @@
 ==============================================================================*/
 
 #include "player.h"
-#include "model.h"
+//#include "model.h"
+#include "model_asset.h"
+#include "model_renderer.h"
 #include "key_logger.h"
 #include "light.h"
 #include "collision.h"
@@ -43,8 +45,8 @@ void Player::Initialize(const DirectX::XMFLOAT3& position, const DirectX::XMFLOA
 	XMStoreFloat3(&m_Front, XMVector3Normalize(XMLoadFloat3(&front)));
 	m_IsJump = false;
 
-	// Load player
-	m_Model = ModelLoad("resources/mannequin.FBX", false, 0.04f);
+	// Load player asset
+	m_Asset = ModelAsset_Load("resources/mannequin.FBX", false, 0.04f);
 
 	// Customize AABB (hard code)
 	m_LocalAABB.min = { -AABB_HALF_W,        0.0f, -AABB_HALF_D };
@@ -55,21 +57,21 @@ void Player::Initialize(const DirectX::XMFLOAT3& position, const DirectX::XMFLOA
 	m_AnimPlayer = new AnimationPlayer();
 
 	// Load animation clip
-	AnimationClip* idleClip = Animation_LoadFromFile("resources/Animation/Idle.fbx", m_Model, true);
+	AnimationClip* idleClip = Animation_LoadFromFile("resources/Animation/Idle.fbx", m_Asset, true);
 	int idleId = AnimationManager::Instance().RegisterClip(idleClip);
 	m_ClipIdle = AnimationManager::Instance().GetClipById(idleId);
 
-	AnimationClip* walkClip = Animation_LoadFromFile("resources/Animation/Walking.fbx", m_Model, true);
+	AnimationClip* walkClip = Animation_LoadFromFile("resources/Animation/Walking.fbx", m_Asset, true);
 	int walkId = AnimationManager::Instance().RegisterClip(walkClip);
 	m_ClipWalk = AnimationManager::Instance().GetClipById(walkId);
 
 	m_ClipRun = nullptr;
 
-	AnimationClip* jumpClip = Animation_LoadFromFile("resources/Animation/Jump.fbx", m_Model, true);
+	AnimationClip* jumpClip = Animation_LoadFromFile("resources/Animation/Jump.fbx", m_Asset, true);
 	int jumpId = AnimationManager::Instance().RegisterClip(jumpClip);
 	m_ClipJump = AnimationManager::Instance().GetClipById(jumpId);
 
-	AnimationClip* fallClip = Animation_LoadFromFile("resources/Animation/Falling.fbx", m_Model, true);
+	AnimationClip* fallClip = Animation_LoadFromFile("resources/Animation/Falling.fbx", m_Asset, true);
 	int fallId = AnimationManager::Instance().RegisterClip(fallClip);
 	m_ClipFall = AnimationManager::Instance().GetClipById(fallId);
 
@@ -79,10 +81,10 @@ void Player::Initialize(const DirectX::XMFLOAT3& position, const DirectX::XMFLOA
 
 void Player::Finalize()
 {
-	if (m_Model)
+	if (m_Asset)
 	{
-		ModelRelease(m_Model);
-		m_Model = nullptr;
+		ModelAsset_Release(m_Asset);
+		m_Asset = nullptr;
 	}
 
 	m_ClipIdle = nullptr;
@@ -110,7 +112,7 @@ void Player::UpdateAnimationOnly(double elapsed_time)
 
 void Player::Draw(const XMFLOAT3& cameraPosition)
 {
-	if (!m_Model) return;
+	if (!m_Asset) return;
 
 	XMVECTOR pos = XMLoadFloat3(&m_Position);
 	XMVECTOR front = XMLoadFloat3(&m_Front);
@@ -140,8 +142,10 @@ void Player::Draw(const XMFLOAT3& cameraPosition)
 		Animation_UpdateSkinningCB(*m_AnimPlayer);
 	}
 
-	ModelDraw(m_Model, world, cameraPosition);
-
+	for (uint32_t mi = 0; mi < (uint32_t)m_Asset->meshes.size(); ++mi)
+	{
+		ModelRenderer_Draw(m_Asset, mi, world, cameraPosition);
+	}
 /*
 #if defined(DEBUG) || defined(_DEBUG)
 	Collision_DebugDraw(m_WorldAABB, { 0.0f, 0.0f, 1.0f, 1.0f });
@@ -348,7 +352,7 @@ void Player::CheckFallState(bool wasGround)
 
 void Player::ChangeState(AnimState newState)
 {
-	if (!m_AnimPlayer || !m_Model) return;
+	if (!m_AnimPlayer || !m_Asset) return;
 	if (m_State == newState) return;
 
 	m_State = newState;
@@ -358,39 +362,39 @@ void Player::ChangeState(AnimState newState)
 	case AnimState::Idle:
 		if (m_ClipIdle)
 		{
-			m_AnimPlayer->Play(m_ClipIdle, m_Model, true, 0.0);
+			m_AnimPlayer->Play(m_ClipIdle, m_Asset, true, 0.0);
 		}
 		break;
 
 	case AnimState::Walk:
 		if (m_ClipWalk)
 		{
-			m_AnimPlayer->Play(m_ClipWalk, m_Model, true, 0.0);
+			m_AnimPlayer->Play(m_ClipWalk, m_Asset, true, 0.0);
 		}
 		break;
 
 	case AnimState::Run:
 		if (m_ClipRun)
 		{
-			m_AnimPlayer->Play(m_ClipRun, m_Model, true, 0.0);
+			m_AnimPlayer->Play(m_ClipRun, m_Asset, true, 0.0);
 		}
 		break;
 
 	case AnimState::Jump:
 		if (m_ClipJump)
 		{
-			m_AnimPlayer->Play(m_ClipJump, m_Model, false, 0.0);
+			m_AnimPlayer->Play(m_ClipJump, m_Asset, false, 0.0);
 		}
 		else if (m_ClipWalk)
 		{
-			m_AnimPlayer->Play(m_ClipWalk, m_Model, true, 0.0);
+			m_AnimPlayer->Play(m_ClipWalk, m_Asset, true, 0.0);
 		}
 		break;
 
 	case AnimState::Fall:
 		if (m_ClipFall)
 		{
-			m_AnimPlayer->Play(m_ClipFall, m_Model, true, 0.0);
+			m_AnimPlayer->Play(m_ClipFall, m_Asset, true, 0.0);
 		}
 		break;
 

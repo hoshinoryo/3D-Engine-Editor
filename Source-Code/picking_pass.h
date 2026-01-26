@@ -16,7 +16,7 @@
 #include "picking_shader.h"
 #include "d3d11_state_guard_util.h"
 
-struct MODEL;
+struct ModelAsset;
 
 class PickingPass
 {
@@ -31,7 +31,8 @@ public:
 	void Begin(const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& proj);
 	void End();
 
-	void DrawModel(MODEL* model, const DirectX::XMMATRIX& world, uint32_t objectId);
+	//void DrawAsset(ModelAsset* asset, const DirectX::XMMATRIX& world, uint32_t objectId);
+	void DrawAsset(ModelAsset* asset, uint32_t meshIndex, const DirectX::XMMATRIX& world, uint32_t objectId);
 
 	uint32_t ReadBackId(int mouseX, int mouseY);
 

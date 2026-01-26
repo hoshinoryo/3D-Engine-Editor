@@ -173,7 +173,8 @@
     <ClCompile Include="light.cpp" />
     <ClCompile Include="line_shader.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="model.cpp" />
+    <ClCompile Include="model_asset.cpp" />
+    <ClCompile Include="model_renderer.cpp" />
     <ClCompile Include="mode_management.cpp" />
     <ClCompile Include="mouse.cpp" />
     <ClCompile Include="orbit_camera.cpp" />
@@ -209,6 +210,9 @@
     <ClInclude Include="d3d11_state_guard_util.h" />
     <ClInclude Include="debug_draw_gate.h" />
     <ClInclude Include="direct3d.h" />
+    <ClInclude Include="mesh_object.h" />
+    <ClInclude Include="model_asset.h" />
+    <ClInclude Include="model_renderer.h" />
     <ClInclude Include="mode_management.h" />
     <ClInclude Include="debug_draw_setting.h" />
     <ClInclude Include="debug_ostream.h" />
@@ -236,7 +240,6 @@
     <ClInclude Include="key_logger.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="line_shader.h" />
-    <ClInclude Include="model.h" />
     <ClInclude Include="mouse.h" />
     <ClInclude Include="orbit_camera.h" />
     <ClInclude Include="outliner.h" />
@@ -256,6 +259,7 @@
     <ClInclude Include="skydome.h" />
     <ClInclude Include="system_timer.h" />
     <ClInclude Include="texture.h" />
+    <ClInclude Include="transform.h" />
     <ClInclude Include="unlit_shader.h" />
     <ClInclude Include="WICTextureLoader11.h" />
   </ItemGroup>

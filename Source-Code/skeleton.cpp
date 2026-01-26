@@ -11,13 +11,15 @@
 #include "skeleton.h"
 #include "skeleton_util.h"
 #include "axis_util.h"
-#include "model.h"
+//#include "model.h"
+#include "model_asset.h"
 #include "scene_manager.h"
 #include "draw3d.h"
 #include "animation.h"
 
 #include <DirectXMath.h>
 #include <unordered_map>
+#include <unordered_set>
 
 using namespace DirectX;
 
@@ -31,12 +33,13 @@ struct SkeletonSettings
 SkeletonSettings g_settings;
 extern AnimationPlayer g_AnimPlayer;
 
+// Helpers
 static XMMATRIX AiMatToXM(const aiMatrix4x4& m);
 static void BuildNodeWorldMatrices(const aiNode* node, const XMMATRIX& parentWorld, std::unordered_map<const aiNode*, XMMATRIX>& nodeWorlds);
 
 // Skelton Drawing Function
-static void DrawSkeletonForModel(const MODEL* model, const XMMATRIX& world);
-static void DrawAnimatedSkeletonForModel(const MODEL* model, const AnimationPlayer* player, const XMMATRIX& world);
+static void DrawSkeletonForAsset(const ModelAsset* asset, const XMMATRIX& world);
+static void DrawAnimatedSkeletonForAsset(const ModelAsset* asset, const AnimationPlayer* player, const XMMATRIX& world);
 
 
 void Skeleton_Initialize()
@@ -48,19 +51,24 @@ void Skeleton_Finalize()
 {
 }
 
-void Skeleton_Draw(const XMMATRIX& mtxWorld)
+void Skeleton_Draw()
 {
-	const auto& models = SceneManager::AllModels();
+	const auto& objects = SceneManager::AllObjects();
 
-	for (const MODEL* m : models)
+	for (const auto& obj : objects)
 	{
-		if (g_AnimPlayer.IsPLaying() && g_AnimPlayer.GetModel() == m)
+		if (!obj.visible) continue;
+		if (!obj.asset || !obj.asset->aiScene) continue;
+
+		const XMMATRIX world = obj.transform.ToMatrix();
+
+		if (g_AnimPlayer.IsPLaying() && g_AnimPlayer.GetAsset() == obj.asset)
 		{
-			DrawAnimatedSkeletonForModel(m, &g_AnimPlayer, mtxWorld);
+			DrawAnimatedSkeletonForAsset(obj.asset, &g_AnimPlayer, world);
 		}
 		else
 		{
-			DrawSkeletonForModel(m, mtxWorld);
+			DrawSkeletonForAsset(obj.asset, world);
 		}
 	}
 }
@@ -95,10 +103,10 @@ static void BuildNodeWorldMatrices(
 	}
 }
 
-static void DrawSkeletonForModel(const MODEL* model, const XMMATRIX& world)
+static void DrawSkeletonForAsset(const ModelAsset* asset, const XMMATRIX& world)
 {
-	if (!model || !model->AiScene || !model->AiScene->mRootNode) return;
-	const aiScene* scene = model->AiScene;
+	if (!asset || !asset->aiScene || !asset->aiScene->mRootNode) return;
+	const aiScene* scene = asset->aiScene;
 
 	// 1. Collect all binded bones
 	SkeletonUtil::BoneNameSet boneNames;
@@ -112,14 +120,10 @@ static void DrawSkeletonForModel(const MODEL* model, const XMMATRIX& world)
 
 	// 3. Compute world matrix for each aiNode(model local space)
 	std::unordered_map<const aiNode*, XMMATRIX> nodeWorlds;
-
 	BuildNodeWorldMatrices(scene->mRootNode, XMMatrixIdentity(), nodeWorlds);
 
 	// ワールド行列
-	//XMMATRIX axisFix = GetAxisFixMatrix(model->SourceYup);
-	XMMATRIX axisFix     = GetAxisConversion(UpFromBool(model->SourceYup), UpAxis::Y_Up);
-	XMMATRIX importScale = XMMatrixScaling(model->Scale, model->Scale, model->Scale);
-	XMMATRIX modelWorld  = importScale * axisFix * world;
+	const XMMATRIX finalWorld = asset->importFix * world;
 
 	// 4. Draw joints and bones
 	for (const aiNode* n : skelSet)
@@ -127,7 +131,7 @@ static void DrawSkeletonForModel(const MODEL* model, const XMMATRIX& world)
 		auto itW = nodeWorlds.find(n);
 		if (itW == nodeWorlds.end()) continue;
 
-		XMMATRIX jointWorld = itW->second * modelWorld;
+		XMMATRIX jointWorld = itW->second * finalWorld;
 
 		XMFLOAT4X4 m;
 		XMStoreFloat4x4(&m, jointWorld);
@@ -143,7 +147,7 @@ static void DrawSkeletonForModel(const MODEL* model, const XMMATRIX& world)
 			auto itPW = nodeWorlds.find(parent);
 			if (itPW != nodeWorlds.end())
 			{
-				XMMATRIX parentWorld = itPW->second * modelWorld;
+				XMMATRIX parentWorld = itPW->second * finalWorld;
 
 				XMFLOAT4X4 mp;
 				XMStoreFloat4x4(&mp, parentWorld);
@@ -155,11 +159,11 @@ static void DrawSkeletonForModel(const MODEL* model, const XMMATRIX& world)
 	}
 }
 
-static void DrawAnimatedSkeletonForModel(const MODEL* model, const AnimationPlayer* player, const XMMATRIX& world)
+static void DrawAnimatedSkeletonForAsset(const ModelAsset* asset, const AnimationPlayer* player, const XMMATRIX& world)
 {
-	if (!model || !model->AiScene || !model->AiScene->mRootNode) return;
+	if (!asset || !asset->aiScene || !asset->aiScene->mRootNode) return;
 	
-	const aiScene* scene = model->AiScene;
+	const aiScene* scene = asset->aiScene;
 
 	// 1. Collect all binded bones
 	SkeletonUtil::BoneNameSet boneNames;
@@ -173,14 +177,9 @@ static void DrawAnimatedSkeletonForModel(const MODEL* model, const AnimationPlay
 
 	// 3. Get pose from AnimationPlayer
 	std::unordered_map<const aiNode*, XMMATRIX> nodeWorlds;
-
 	player->GetCurrentPose(nodeWorlds);
 
-	// ワールド行列
-	//XMMATRIX axisFix     = GetAxisFixMatrix(model->SourceYup);
-	XMMATRIX axisFix     = GetAxisConversion(UpFromBool(model->SourceYup), UpAxis::Y_Up);
-	XMMATRIX importScale = XMMatrixScaling(model->Scale, model->Scale, model->Scale);
-	XMMATRIX modelWorld  = importScale * axisFix * world;
+	const XMMATRIX finalWorld = asset->importFix * world;
 
 	// 4. Draw joints and bones
 	for (const aiNode* n : skelSet)
@@ -188,7 +187,7 @@ static void DrawAnimatedSkeletonForModel(const MODEL* model, const AnimationPlay
 		auto itW = nodeWorlds.find(n);
 		if (itW == nodeWorlds.end()) continue;
 
-		XMMATRIX jointWorld = itW->second * modelWorld;
+		XMMATRIX jointWorld = itW->second * finalWorld;
 
 		XMFLOAT4X4 m;
 		XMStoreFloat4x4(&m, jointWorld);
@@ -204,7 +203,7 @@ static void DrawAnimatedSkeletonForModel(const MODEL* model, const AnimationPlay
 			auto itPW = nodeWorlds.find(parent);
 			if (itPW != nodeWorlds.end())
 			{
-				XMMATRIX parentWorld = itPW->second * modelWorld;
+				XMMATRIX parentWorld = itPW->second * finalWorld;
 
 				XMFLOAT4X4 mp;
 				XMStoreFloat4x4(&mp, parentWorld);
