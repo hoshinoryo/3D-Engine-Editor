@@ -354,6 +354,7 @@ XMMATRIX AnimationPlayer::SampleLocalTransform(const aiNode* node, double tickTi
 		SampleTrack(*track, tickTimes, T, R, S);
 
 		// debug
+		/*
 		static double s_lastPrintTime = -1.0;
 		if (node && strcmp(node->mName.C_Str(), "clavicle_l") == 0)
 		{
@@ -368,6 +369,7 @@ XMMATRIX AnimationPlayer::SampleLocalTransform(const aiNode* node, double tickTi
 				s_lastPrintTime = tickTimes;
 			}
 		}
+		*/
 	}
 	else // If has no track -> use bind pose
 	{
@@ -414,7 +416,7 @@ void AnimationPlayer::BuildModelSpacePoseResursive(
 // All skin matrix data in model space
 // Convert from bind pose to the playing pose
 // MIND THE SCALING!!!
-void AnimationPlayer::ComputeSkinMatrices(std::vector<DirectX::XMFLOAT4X4>& outBoneMatrix) const
+void AnimationPlayer::ComputeSkinMatrices(std::vector<XMFLOAT4X4>& outBoneMatrix) const
 {
 	outBoneMatrix.clear();
 
@@ -426,7 +428,6 @@ void AnimationPlayer::ComputeSkinMatrices(std::vector<DirectX::XMFLOAT4X4>& outB
 	std::unordered_map<const aiNode*, XMMATRIX> nodeModelMtx;
 	XMMATRIX rootParent = XMMatrixIdentity(); // parent node for root node
 
-	
 	// Z-up tp Y-up
 	if (m_Asset && m_Clip)
 	{
@@ -436,7 +437,6 @@ void AnimationPlayer::ComputeSkinMatrices(std::vector<DirectX::XMFLOAT4X4>& outB
 		if (animUp != modelUp)
 		{
 			XMMATRIX axisFix = GetAxisConversion(animUp, modelUp);
-			//XMMATRIX axisFix = XMMatrixRotationX(-XM_PIDIV2);
 			rootParent = axisFix;
 		}
 	}

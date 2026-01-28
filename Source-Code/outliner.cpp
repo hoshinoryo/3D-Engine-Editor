@@ -21,14 +21,6 @@
 
 namespace Outliner
 {
-	/*
-	// Model status
-	struct PerModelState
-	{
-		std::vector<bool> meshVisible; // visibility for each mesh
-	};
-	*/
-	
 	struct DrawerRegistry
 	{
 		DrawProc mesh = nullptr;
@@ -61,18 +53,12 @@ namespace Outliner
 	};
 
 	// ---- ïœêîêÈåæ ----
-	//static std::unordered_map<const ModelAsset*, PerModelState> g_state; // unordered_map = dictionary
-
-	//static const ModelAsset* g_selectedModel = nullptr;
 	static uint32_t g_selectedObjectId = 0;
 
 	static DrawerRegistry g_drawers;
 	static IconRegistry g_icons;
 
 	static ID3D11ShaderResourceView* IconSRV(ViewKind kind);
-
-	// ---- Inner tool function ----
-	//static PerModelState& ensureState(const ModelAsset* asset);
 
 	// Forward decl
 	static bool NodeHasMeshes(const aiNode* node);
@@ -81,20 +67,6 @@ namespace Outliner
 	static void MeshNodeProjected(ModelAsset* asset, const aiNode* node);
 	static void DrawSkeletonSubtree(const aiNode* node, const std::unordered_set<const aiNode*>& S);
 
-	//static void const DrawMeshNode(ModelAsset* asset);
-	//static void const DrawSkeletonNode(ModelAsset* asset);
-
-	/*
-	inline void DispatchAllRegisteredDrawers(const ModelAsset* asset)
-	{
-		if (g_drawers.mesh)      g_drawers.mesh(asset);
-		if (g_drawers.skeleton)  g_drawers.skeleton(asset);
-		if (g_drawers.light)     g_drawers.light(asset);
-		if (g_drawers.camera)    g_drawers.camera(asset);
-		if (g_drawers.material)  g_drawers.material(asset);
-		if (g_drawers.custom1)   g_drawers.custom1(asset);
-	}
-	*/
 
 	static void BuildNameToNodeMap(const aiNode* node, std::unordered_map<std::string, const aiNode*>& map)
 	{
@@ -109,26 +81,6 @@ namespace Outliner
 		}
 	}
 
-	/*
-	void SetDrawer(ViewKind kind, DrawProc fn)
-	{
-		switch (kind)
-		{
-		case ViewKind::MESH:     g_drawers.mesh = fn;     break;
-		case ViewKind::SKELETON: g_drawers.skeleton = fn; break;
-		case ViewKind::LIGHT:    g_drawers.light = fn;    break;
-		case ViewKind::CAMERA:   g_drawers.camera = fn;   break;
-		case ViewKind::MATERIAL: g_drawers.material = fn; break;
-		case ViewKind::CUSTOM1:  g_drawers.custom1 = fn;  break;
-		}
-	}
-	
-	void InitDefaultDrawers()
-	{
-		SetDrawer(ViewKind::MESH,     DrawMeshNode);
-		SetDrawer(ViewKind::SKELETON, DrawSkeletonNode);
-	}
-	*/
 
 	bool InitIcons(const wchar_t* meshIconPath, const wchar_t* skeletonIconPath, ImVec2 iconSize)
 	{
@@ -236,39 +188,6 @@ namespace Outliner
 		return objectId != 0;
 	}
 
-	/*
-	// NodeÇÃï`âÊ
-	void Outliner::DrawAiNode(const ModelAsset* asset, const aiNode* node)
-	{
-		if (!asset->aiScene || !node) return;
-
-		ImGui::PushID(node);
-
-		// node label
-		const char* nodeLabel = (node->mName.length > 0) ? node->mName.C_Str() : "(node)";
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
-		// leave node
-		if (node->mNumChildren == 0)
-		{
-			flags |= ImGuiTreeNodeFlags_Leaf;
-		}
-
-		bool open = ImGui::TreeNodeEx(nodeLabel, flags);
-
-		if (open)
-		{
-			for (unsigned int c = 0; c < node->mNumChildren; ++c)
-			{
-				DrawAiNode(asset, node->mChildren[c]);
-			}
-
-			ImGui::TreePop();
-		}
-
-		ImGui::PopID();
-	}
-	*/
 
 	// ---- Mesh node drawing ----
 	static void MeshNodeRow(ModelAsset* asset, unsigned meshIdx)

@@ -1,6 +1,6 @@
 /*==============================================================================
 
-   Scene Manager [scene_manager.cpp]
+   Mesh object list management [scene_manager.cpp]
 														 Author : Gu Anyi
 														 Date   : 2025/11/10
 --------------------------------------------------------------------------------
@@ -10,6 +10,9 @@
 #include "scene_manager.h"
 
 #include <algorithm>
+#include <DirectXMath.h>
+
+using namespace DirectX;
 
 namespace
 {
@@ -96,7 +99,7 @@ namespace SceneManager
 		return nullptr;
 	}
 
-	// for picking pass (mesh)
+	// for mesh
 	const std::vector<MeshObject>& AllObjects()
 	{
 		return g_meshObjects;
@@ -107,6 +110,12 @@ namespace SceneManager
 	{
 		if (g_assetsDirty) RebuildAssetsCache();
 		return g_assetsUniqueCache;
+	}
+
+	// mutable meshes
+	std::vector<MeshObject>& AllObjectsMutable()
+	{
+		return g_meshObjects;
 	}
 
 	void SetVisibleByAsset(ModelAsset* asset, bool visible)
@@ -124,6 +133,24 @@ namespace SceneManager
 		{
 			if (o.asset == asset)
 				o.pickable = pickable;
+		}
+	}
+
+	void UpdateWorldAABBs()
+	{
+		for (auto& obj : AllObjectsMutable())
+		{
+			if (!obj.asset)
+			{
+				obj.aabbValid = false;
+				continue;
+			}
+
+			const XMMATRIX world = obj.transform.ToMatrix();
+			const XMMATRIX finalWorld = obj.asset->importFix * world;
+
+			obj.worldAABB = Collision_TransformAABB(obj.asset->meshes[obj.meshIndex].localAABB, finalWorld);
+			obj.aabbValid = true;
 		}
 	}
 

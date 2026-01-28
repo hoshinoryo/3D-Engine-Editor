@@ -1,3 +1,12 @@
+/*==============================================================================
+
+   Mesh object describtion [mesh_object.h]
+														 Author : Gu Anyi
+														 Date   : 2026/01/28
+--------------------------------------------------------------------------------
+
+==============================================================================*/
+
 #ifndef MESH_OBJECT_H
 #define MESH_OBJECT_H
 
@@ -7,6 +16,7 @@
 #include "transform.h"
 
 struct ModelAsset;
+struct AABB;
 
 struct MeshObjectSerializable
 {
@@ -28,6 +38,9 @@ struct MeshObject
 	bool pickable = true;
 
 	std::string name;
+
+	AABB worldAABB;
+	bool aabbValid = false;
 };
 
 #endif // MESH_OBJECT_H

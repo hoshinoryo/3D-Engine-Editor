@@ -17,6 +17,7 @@
 #include "aabb_provider.h"
 
 struct ModelAsset;
+struct MeshObject;
 
 struct Sphere
 {
@@ -69,12 +70,12 @@ struct Hit
 
 namespace CollisionSystem
 {
-	std::vector<AABB> AllStatics();
-	void ClearStatics();
-	void AddStaticAABB(const AABB& aabb);
-	void AddStaticModel(const ModelAsset* asset, const DirectX::XMMATRIX& objWorld);
+	std::vector<AABB> AllColliders();
+	void ClearColliders();
 
-	bool ResolveAgainstStatic(
+	void AddCollidersAABB(const AABB& aabb);
+
+	bool ResolveAgainstScene(
 		const IAABBProvider& playerAABBProvider,
 		DirectX::XMFLOAT3& position,
 		int maxIterations = 4,

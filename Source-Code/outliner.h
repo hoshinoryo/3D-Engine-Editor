@@ -10,12 +10,8 @@
 #ifndef OUTLINER_H
 #define OUTLINER_H
 
-//#include <vector>
-//#include <unordered_map>
-//#include <string>
 #include <cstdint>
 
-//#include "model_asset.h"
 #include "imgui/imgui.h"
 
 struct ModelAsset;
@@ -33,10 +29,6 @@ namespace Outliner
 	};
 
 	using DrawProc = void(*)(const ModelAsset* asset);
-	
-	// Drawer reigister function
-	//void SetDrawer(ViewKind kind, DrawProc fn);
-	//void InitDefaultDrawers();
 
 	// Icon function
 	bool InitIcons(
@@ -53,7 +45,6 @@ namespace Outliner
 	bool GetSelection(uint32_t& objectId);
 
 	// ---- Draw Outliner ----
-	//void DrawAiNode(const ModelAsset* asset, const aiNode* node);
 
 	// Mesh
 	void DrawMeshNode(const ModelAsset* asset);

@@ -1,3 +1,12 @@
+/*==============================================================================
+
+   Model asset import and release [model_asset.h]
+														 Author : Gu Anyi
+														 Date   : 2026/01/28
+--------------------------------------------------------------------------------
+
+==============================================================================*/
+
 #ifndef MODEL_ASSET_H
 #define MODEL_ASSET_H
 
@@ -33,6 +42,7 @@ struct Vertex3d
 	float boneWeight[4];// 各ボーンのウェイト
 };
 
+// aiMeshごとに管理されてる
 struct MeshAsset
 {
 	ID3D11Buffer* vertexBuffer = nullptr;
@@ -44,6 +54,7 @@ struct MeshAsset
 	AABB localAABB{};
 };
 
+// fbxファイルごとに管理されている
 struct ModelAsset
 {
 	// Import settings

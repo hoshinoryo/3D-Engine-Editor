@@ -1,3 +1,12 @@
+/*==============================================================================
+
+   Model asset import and release [model_asset.cpp]
+														 Author : Gu Anyi
+														 Date   : 2026/01/28
+--------------------------------------------------------------------------------
+
+==============================================================================*/
+
 #include <algorithm>
 #include <assert.h>
 #include <unordered_set>
@@ -18,6 +27,12 @@ static const int MAX_BONES = 256;
 static std::wstring Utf8ToWstring(const std::string& s);
 static void AssignUVForMesh(Vertex3d* vertex, const aiMesh* mesh);
 static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory);
+static void ApplySkinWeightToVertices(
+	Vertex3d* vertices,
+	const aiMesh* mesh,
+	const std::unordered_map<std::string, int>& boneNameToIndex
+);
+static AABB ComputeLocalAABB(const aiMesh* mesh);
 
 // Path normalization
 static std::string NormalizePath(std::string p);
@@ -26,13 +41,6 @@ static bool IsAbsolutePath(const std::string& p);
 static std::string MakeTextureKey(const std::string& directory, const std::string& raw);
 static void RegisterTextureAlias(ModelAsset* asset, ID3D11ShaderResourceView* srv, const std::string& key);
 
-static void ApplySkinWeightToVertices(
-	Vertex3d* vertices,
-	const aiMesh* mesh,
-	const std::unordered_map<std::string, int>& boneNameToIndex
-);
-static AABB ComputeLocalAABB(const aiMesh* mesh);
-//static void EnsureDefaultTextures();
 
 // Fbx model file load
 ModelAsset* ModelAsset_Load(const char* filename, bool yUp, float scale)

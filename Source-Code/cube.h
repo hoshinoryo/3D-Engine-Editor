@@ -45,6 +45,4 @@ void Cube_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, float
 void Cube_Finalize(void);
 void Cube_DrawMesh(const DirectX::XMMATRIX& mtxWorld);
 
-//void Cube_DrawPyramid(int layers = 5, float cubeSize = 1.0f, float gap = 0.0f);
-
 #endif // CUBE_H

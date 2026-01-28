@@ -40,15 +40,7 @@ void Demo_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	g_groundCubes = GenerateGroundCubePos(g_CubeSize, -1.0f);
 	g_wallCubes = GenerateWallCubePos(g_CubeSize, -1.0f);
 
-	for (const auto& c : g_groundCubes)
-	{
-		CollisionSystem::AddStaticAABB(c.GetAABB());
-	}
-
-	for (const auto& c : g_wallCubes)
-	{
-		CollisionSystem::AddStaticAABB(c.GetAABB());
-	}
+	Demo_AddCollidersAABB();
 }
 
 void Demo_Finalize(void)
@@ -76,6 +68,32 @@ void Demo_Draw()
 		{
 			Collision_DebugDraw(c.GetAABB(), { 1.0f, 0.0f, 0.0f, 1.0f });
 		}
+	}
+}
+
+void Demo_UpdateWorldAABB()
+{
+	for (auto& c : g_groundCubes)
+	{
+		c.UpdateAABB();
+	}
+
+	for (auto& c : g_wallCubes)
+	{
+		c.UpdateAABB();
+	}
+}
+
+void Demo_AddCollidersAABB()
+{
+	for (const auto& c : g_groundCubes)
+	{
+		CollisionSystem::AddCollidersAABB(c.GetAABB());
+	}
+
+	for (const auto& c : g_wallCubes)
+	{
+		CollisionSystem::AddCollidersAABB(c.GetAABB());
 	}
 }
 

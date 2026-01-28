@@ -1,6 +1,6 @@
 /*==============================================================================
 
-   Scene Manager [scene_manager.h]
+   Mesh object list management [scene_manager.h]
 														 Author : Gu Anyi
 														 Date   : 2025/11/10
 --------------------------------------------------------------------------------
@@ -16,6 +16,9 @@
 #include "model_asset.h"
 #include "mesh_object.h"
 
+struct AABB;
+class CubeObject;
+
 namespace SceneManager
 {
 	uint32_t RegisterMeshObject(ModelAsset* asset,uint32_t meshIndex, const TransformTRS& trs, bool pickable = true);
@@ -26,9 +29,12 @@ namespace SceneManager
 
 	const std::vector<MeshObject>& AllObjects();
 	const std::vector<ModelAsset*>& AllModelAssets();
+	std::vector<MeshObject>& AllObjectsMutable();
 
 	void SetVisibleByAsset(ModelAsset* asset, bool visible);
 	void SetPickableByAsset(ModelAsset* asset, bool pickable);
+
+	void UpdateWorldAABBs();
 
 	void Clear();
 }

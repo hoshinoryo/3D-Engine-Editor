@@ -1,3 +1,12 @@
+/*==============================================================================
+
+   Model asset drawing functions [model_renderer.cpp]
+														 Author : Gu Anyi
+														 Date   : 2026/01/28
+--------------------------------------------------------------------------------
+
+==============================================================================*/
+
 #include "model_renderer.h"
 #include "model_asset.h"
 #include "direct3d.h"
@@ -18,7 +27,7 @@ static bool g_TexReady = false;
 static void BindPS_SRV(UINT slot, ID3D11ShaderResourceView* srv);
 static ID3D11ShaderResourceView* FindSRV(ModelAsset* asset, const std::string& key);
 
-static AABB TransformAABB(const AABB& local, const XMMATRIX& world);
+//static AABB TransformAABB(const AABB& local, const XMMATRIX& world);
 
 
 void ModelRenderer_Initialize()
@@ -186,3 +195,43 @@ static ID3D11ShaderResourceView* FindSRV(ModelAsset* asset, const std::string& k
 
 	return nullptr;
 }
+
+/*
+static AABB TransformAABB(const AABB& local, const XMMATRIX& world)
+{
+	const XMFLOAT3& min = local.min;
+	const XMFLOAT3& max = local.max;
+
+	XMVECTOR corners[8] =
+	{
+		XMVectorSet(min.x, min.y, min.z, 1),
+		XMVectorSet(max.x, min.y, min.z, 1),
+		XMVectorSet(min.x, max.y, min.z, 1),
+		XMVectorSet(max.x, max.y, min.z, 1),
+		XMVectorSet(min.x, min.y, max.z, 1),
+		XMVectorSet(max.x, min.y, max.z, 1),
+		XMVectorSet(min.x, max.y, max.z, 1),
+		XMVectorSet(max.x, max.y, max.z, 1),
+	};
+
+	XMFLOAT3 outMin{  FLT_MAX,  FLT_MAX,  FLT_MAX };
+	XMFLOAT3 outMax{ -FLT_MAX, -FLT_MAX, -FLT_MAX };
+
+	for (int i = 0; i < 8; i++)
+	{
+		XMVECTOR p = XMVector3TransformCoord(corners[i], world);
+		XMFLOAT3 pf;
+		XMStoreFloat3(&pf, p);
+
+		outMin.x = std::min(outMin.x, pf.x);
+		outMin.y = std::min(outMin.y, pf.y);
+		outMin.z = std::min(outMin.z, pf.z);
+
+		outMax.x = std::max(outMax.x, pf.x);
+		outMax.y = std::max(outMax.y, pf.y);
+		outMax.z = std::max(outMax.z, pf.z);
+	}
+
+	return { outMin, outMax };
+}
+*/

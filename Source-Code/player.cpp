@@ -9,13 +9,13 @@
 ==============================================================================*/
 
 #include "player.h"
-//#include "model.h"
 #include "model_asset.h"
 #include "model_renderer.h"
 #include "key_logger.h"
 #include "light.h"
 #include "collision.h"
 #include "debug_draw_gate.h"
+#include "scene_manager.h"
 
 #include <DirectXMath.h>
 
@@ -255,7 +255,7 @@ void Player::UpdatePhysics(double elapsed_time)
 
 	// “–‚½‚è”»’è
 	bool grounded = false;
-	CollisionSystem::ResolveAgainstStatic(*this, m_Position, 4, &grounded);
+	CollisionSystem::ResolveAgainstScene(*this, m_Position, 4, &grounded);
 
 	UpdateAABB();
 
@@ -410,7 +410,7 @@ bool Player::CheckGroundProbe(float probe) const
 	probeBox.max.y = probeBox.min.y + probe;
 	probeBox.min.y -= probe;
 
-	for (const AABB& s : CollisionSystem::AllStatics())
+	for (const AABB& s : CollisionSystem::AllColliders())
 	{
 		if (Collision_IsOverlapAABB(probeBox, s))
 			return true;

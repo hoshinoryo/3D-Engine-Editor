@@ -84,7 +84,7 @@ void Game_Initialize()
     g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 1.0f);
 
     SceneManager::Clear();
-    CollisionSystem::ClearStatics();
+    CollisionSystem::ClearColliders();
     //GuideOverlay::Initialize();
 
     if (g_modelTest2)
@@ -164,6 +164,23 @@ void Game_Update(double elapsed_time)
         g_Player.UpdateAnimationOnly(elapsed_time);
     }
 
+    // ---- COLLISIONS UPDATE ----
+    SceneManager::UpdateWorldAABBs();
+    Demo_UpdateWorldAABB();
+
+    CollisionSystem::ClearColliders();
+
+    // add world AABB into list
+    for (const auto& obj : SceneManager::AllObjects())
+    {
+        if (!obj.visible) continue;
+        if (!obj.aabbValid) continue;
+
+        CollisionSystem::AddCollidersAABB(obj.worldAABB);
+    }
+    Demo_AddCollidersAABB();
+    // ---------------------------
+
     Skydome_SetPosition(camPos);
 }
 
@@ -219,15 +236,16 @@ void Game_Draw()
 
         const XMMATRIX world = obj.transform.ToMatrix();
         ModelRenderer_Draw(obj.asset, obj.meshIndex, world, camPos);
+        
+        /*
+        const XMMATRIX finalWorld = obj.asset->importFix * world;
+        obj.worldAABB = Collision_TransformAABB(obj.asset->meshes[obj.meshIndex].localAABB, finalWorld);
+        obj.aabbValid = true;
+        */
 
-/*
-#if defined(DEBUG) || defined(_DEBUG)
-        Collision_DebugDraw(obj.model->worldAABB, { 0.0f, 0.0f, 1.0f, 1.0f });
-#endif
-*/
         if (DebugDraw_Allow(DebugDrawCategory::Collision))
         {
-            Collision_DebugDraw(obj.asset->meshes[obj.meshIndex].localAABB, {0.0f, 0.0f, 1.0f, 1.0f});
+            Collision_DebugDraw(obj.worldAABB, {0.0f, 0.0f, 1.0f, 1.0f});
         }
     }
 

@@ -15,6 +15,7 @@
 #include "draw3d.h"
 #include "model_asset.h"
 #include "model_renderer.h"
+#include "mesh_object.h"
 #include "axis_util.h"
 
 #include <algorithm>
@@ -29,7 +30,7 @@ static ID3D11DeviceContext* g_pContext = nullptr;
 static Texture g_WhiteTexId;
 static LineShader g_LineCollisionShader;
 
-std::vector<AABB> g_Statics;
+std::vector<AABB> g_Colliders;
 
 
 struct VertexCollision
@@ -308,42 +309,25 @@ void Collision_DebugDraw(const AABB& aabb, const DirectX::XMFLOAT4 color)
 	Draw3d_MakeWireBox(aabb.GetCenter(), aabb.GetHalf(), color);
 }
 
-std::vector<AABB> CollisionSystem::AllStatics()
+
+std::vector<AABB> CollisionSystem::AllColliders()
 {
-	return g_Statics;
+	return g_Colliders;
 }
 
-void CollisionSystem::ClearStatics()
+void CollisionSystem::ClearColliders()
 {
-	g_Statics.clear();
+	g_Colliders.clear();
 }
 
-void CollisionSystem::AddStaticAABB(const AABB& aabb)
+void CollisionSystem::AddCollidersAABB(const AABB& aabb)
 {
-	g_Statics.push_back(aabb);
-}
-
-void CollisionSystem::AddStaticModel(const ModelAsset* asset, const XMMATRIX& objWorld)
-{
-	if (!asset) return;
-
-	/*
-	XMMATRIX axisFix = GetAxisConversion(UpFromBool(asset->sourceYup), UpAxis::Y_Up);
-	XMMATRIX importScale = XMMatrixScaling(asset->importScale, asset->importScale, asset->importScale);
-	XMMATRIX finalWorld = importScale * axisFix * objWorld;
-	*/
-	const XMMATRIX finalWorld = asset->importFix * objWorld;
-
-	for (const MeshAsset& mesh : asset->meshes)
-	{
-		AABB worldAABB = Collision_TransformAABB(mesh.localAABB, finalWorld);
-		AddStaticAABB(worldAABB);
-	}
+	g_Colliders.push_back(aabb);
 }
 
 // Resolves collisions between the player's AABB and static AABBs
 // by iteratively pushing the player out along the minimum penetration axis
-bool CollisionSystem::ResolveAgainstStatic(
+bool CollisionSystem::ResolveAgainstScene(
 	const IAABBProvider& playerAABBProvider,
 	XMFLOAT3& position,
 	int maxIterations,
@@ -359,15 +343,20 @@ bool CollisionSystem::ResolveAgainstStatic(
 	{
 		bool hitThisIter = false;
 
-		for (const AABB& s : g_Statics)
+		for (const AABB& s : g_Colliders)
 		{
+			//if (!obj.visible) continue;
+			//if (!obj.aabbValid) continue;
+
+			//const AABB& s = obj.worldAABB;
+
 			Hit hit = Collision_IsHitAABB(playerAABB, s);
 			if (!hit.isHit) continue;
 
 			anyHit = true;
 			hitThisIter = true;
 
-			XMFLOAT3 n = hit.normal;
+			XMFLOAT3 n = hit.normal; // ‰Ÿ‚µ–ß‚µ•ûŒü
 
 			const float lenSq = n.x * n.x + n.y * n.y + n.z * n.z;
 			if (lenSq < 1e-8f) n = { 0.0f, 1.0f, 0.0f };
