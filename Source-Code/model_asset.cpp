@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <assert.h>
+#include <unordered_set>
 
 #include "model_asset.h"
 #include "WICTextureLoader11.h"
@@ -13,27 +14,29 @@ using namespace DirectX;
 
 static const int MAX_BONES = 256;
 
-static Texture g_TextureWhite;
-static Texture g_NormalFlat;
-static bool g_defaultTexReady = false;
-
 // ---- Function Tool ----
 static std::wstring Utf8ToWstring(const std::string& s);
 static void AssignUVForMesh(Vertex3d* vertex, const aiMesh* mesh);
 static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory);
+
+// Path normalization
+static std::string NormalizePath(std::string p);
+static std::string Basename(std::string p);
+static bool IsAbsolutePath(const std::string& p);
+static std::string MakeTextureKey(const std::string& directory, const std::string& raw);
+static void RegisterTextureAlias(ModelAsset* asset, ID3D11ShaderResourceView* srv, const std::string& key);
+
 static void ApplySkinWeightToVertices(
 	Vertex3d* vertices,
 	const aiMesh* mesh,
 	const std::unordered_map<std::string, int>& boneNameToIndex
 );
 static AABB ComputeLocalAABB(const aiMesh* mesh);
-static void EnsureDefaultTextures();
+//static void EnsureDefaultTextures();
 
 // Fbx model file load
 ModelAsset* ModelAsset_Load(const char* filename, bool yUp, float scale)
 {
-	EnsureDefaultTextures();
-
 	ModelAsset* asset = new ModelAsset();
 	asset->importScale = scale;
 	asset->sourceYup = yUp;
@@ -190,46 +193,29 @@ ModelAsset* ModelAsset_Load(const char* filename, bool yUp, float scale)
 
 			// Diffuse map path
 			aiString diffuseName;
-			if (AI_SUCCESS == aimat->GetTexture(aiTextureType_DIFFUSE, 0, &diffuseName))
+			if (AI_SUCCESS == aimat->GetTexture(aiTextureType_DIFFUSE, 0, &diffuseName) && diffuseName.length != 0)
 			{
-				if (diffuseName.length != 0)
-				{
-					std::string fullpath = directory.empty()
-						? std::string(diffuseName.C_Str())
-						: (directory + "/" + diffuseName.C_Str());
-					mat->SetDiffuseMapPath(fullpath);
-				}
+				mat->SetDiffuseMapPath(MakeTextureKey(directory, diffuseName.C_Str()));
 			}
 
 			// Normal map path (NORMALS or HEIGHT)
 			aiString normalName;
 			if (AI_SUCCESS == aimat->GetTexture(aiTextureType_NORMALS, 0, &normalName) ||
-				AI_SUCCESS == aimat->GetTexture(aiTextureType_HEIGHT, 0, &normalName))
+				AI_SUCCESS == aimat->GetTexture(aiTextureType_HEIGHT, 0, &normalName) &&
+				normalName.length != 0)
 			{
-				if (normalName.length != 0)
-				{
-					std::string fullpath = directory.empty()
-						? std::string(normalName.C_Str())
-						: (directory + "/" + normalName.C_Str());
-					mat->SetNormalMapPath(fullpath);
-				}
+				mat->SetNormalMapPath(MakeTextureKey(directory, normalName.C_Str()));
 			}
 
 			// Specular map path
 			aiString specName;
-			if (AI_SUCCESS == aimat->GetTexture(aiTextureType_SPECULAR, 0, &specName))
+			if (AI_SUCCESS == aimat->GetTexture(aiTextureType_SPECULAR, 0, &specName) && specName.length != 0)
 			{
-				if (specName.length != 0)
-				{
-					std::string fullpath = directory.empty()
-						? std::string(specName.C_Str())
-						: (directory + "/" + specName.C_Str());
-					mat->SetSpecularMapPath(fullpath);
-				}
+				mat->SetSpecularMapPath(MakeTextureKey(directory, specName.C_Str()));
 			}
 
 			asset->materials[i] = mat;
-			Defaul3DMaterial_Register(mat);
+			Default3DMaterial_Register(mat);
 		}
 	}
 
@@ -242,14 +228,28 @@ void ModelAsset_Release(ModelAsset* asset)
 
 	for (auto& m : asset->meshes)
 	{
-		if (m.vertexBuffer) m.vertexBuffer->Release();
-		if (m.indexBuffer) m.indexBuffer->Release();
+		if (m.vertexBuffer)
+		{
+			m.vertexBuffer->Release();
+			m.vertexBuffer = nullptr;
+		}
+		if (m.indexBuffer)
+		{
+			m.indexBuffer->Release();
+			m.indexBuffer = nullptr;
+		}
 	}
 	asset->meshes.clear();
 
+	std::unordered_set<ID3D11ShaderResourceView*> released;
 	for (auto& pair : asset->textures)
 	{
-		if (pair.second) pair.second->Release();
+		ID3D11ShaderResourceView* srv = pair.second;
+		if (!srv) continue;
+		if (released.insert(srv).second)
+		{
+			srv->Release();
+		}
 	}
 	asset->textures.clear();
 
@@ -299,26 +299,40 @@ static void AssignUVForMesh(Vertex3d* vertex, const aiMesh* mesh)
 static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory)
 {
 	// DIFFUSE MAP
-	// テクスチャが内包されている場合
+	// テクスチャが内包されている場合内
 	for (unsigned int i = 0; i < asset->aiScene->mNumTextures; ++i)
 	{
 		aiTexture* aitexture = asset->aiScene->mTextures[i];
+		if (!aitexture) continue;
 
 		ID3D11ShaderResourceView* texture = nullptr;
 		ID3D11Resource* resource = nullptr;
+
+		const size_t bytes = (aitexture->mHeight == 0)
+			? static_cast<size_t>(aitexture->mWidth)
+			: static_cast<size_t>(aitexture->mWidth) * static_cast<size_t>(aitexture->mHeight) * 4;
 
 		HRESULT hr = CreateWICTextureFromMemory(
 			Direct3D_GetDevice(),
 			Direct3D_GetContext(),
 			reinterpret_cast<const uint8_t*>(aitexture->pcData),
-			static_cast<size_t>(aitexture->mWidth),
+			bytes,
 			&resource,
 			&texture
 		);
 		if (SUCCEEDED(hr) && texture)
 		{
 			resource->Release();
-			asset->textures[aitexture->mFilename.data] = texture;
+
+			const std::string starKey = "*" + std::to_string(i);
+			//asset->textures[starKey] = texture;
+			RegisterTextureAlias(asset, texture, starKey);
+
+			if (aitexture->mFilename.length > 0)
+			{
+				//asset->textures[aitexture->mFilename.C_Str()] = texture;
+				RegisterTextureAlias(asset, texture, aitexture->mFilename.C_Str());
+			}			
 		}
 	}
 
@@ -338,11 +352,10 @@ static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory
 			continue;
 		}
 
-		std::string fullpath = directory.empty()
-			? std::string(diffuseName.C_Str())
-			: (directory + "/" + diffuseName.C_Str());
+		std::string rawName = diffuseName.C_Str();
+		std::string fullKey = MakeTextureKey(directory, rawName);
 
-		std::wstring wpath = Utf8ToWstring(fullpath);
+		std::wstring wpath = Utf8ToWstring(fullKey);
 
 		ID3D11ShaderResourceView* texture = nullptr;
 		ID3D11Resource* resource = nullptr;
@@ -354,10 +367,13 @@ static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory
 			&resource,
 			&texture
 		);
+
 		if (SUCCEEDED(hr) && texture)
 		{
 			resource->Release();
-			asset->textures[diffuseName.C_Str()] = texture;
+
+			RegisterTextureAlias(asset, texture, fullKey);
+			RegisterTextureAlias(asset, texture, rawName);
 		}
 	}
 
@@ -380,11 +396,10 @@ static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory
 			continue;
 		}
 
-		std::string fullpath = directory.empty()
-			? std::string(normalName.C_Str())
-			: (directory + "/" + normalName.C_Str());
+		std::string rawName = normalName.C_Str();
+		std::string fullKey = MakeTextureKey(directory, rawName);
 
-		std::wstring wpath = Utf8ToWstring(fullpath);
+		std::wstring wpath = Utf8ToWstring(fullKey);
 
 		ID3D11ShaderResourceView* texture = nullptr;
 		ID3D11Resource* resource = nullptr;
@@ -396,10 +411,13 @@ static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory
 			&resource,
 			&texture
 		);
+
 		if (SUCCEEDED(hr) && texture)
 		{
 			resource->Release();
-			asset->textures[normalName.C_Str()] = texture;
+
+			RegisterTextureAlias(asset, texture, fullKey);
+			RegisterTextureAlias(asset, texture, rawName);
 		}
 	}
 
@@ -412,18 +430,17 @@ static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory
 		if (AI_SUCCESS != aimaterial->GetTexture(aiTextureType_SPECULAR, 0, &specNAME))
 		{
 			continue;
-		} // with no normal map
+		} // with no specular map
 
 		if (asset->textures.count(specNAME.C_Str()))
 		{
 			continue;
 		}
 
-		std::string fullpath = directory.empty()
-			? std::string(specNAME.C_Str())
-			: (directory + "/" + specNAME.C_Str());
+		std::string rawName = specNAME.C_Str();
+		std::string fullKey = MakeTextureKey(directory, rawName);
 
-		std::wstring wpath = Utf8ToWstring(fullpath);
+		std::wstring wpath = Utf8ToWstring(fullKey);
 
 		ID3D11ShaderResourceView* texture = nullptr;
 		ID3D11Resource* resource = nullptr;
@@ -435,15 +452,84 @@ static void LoadAllModelTextures(ModelAsset* asset, const std::string& directory
 			&resource,
 			&texture
 		);
+
 		if (SUCCEEDED(hr) && texture)
 		{
 			resource->Release();
-			asset->textures[specNAME.C_Str()] = texture;
+
+			RegisterTextureAlias(asset, texture, fullKey);
+			RegisterTextureAlias(asset, texture, rawName);
 		}
 	}
 }
 
-void ApplySkinWeightToVertices(Vertex3d* vertices, const aiMesh* mesh, const std::unordered_map<std::string, int>& boneNameToIndex)
+static std::string NormalizePath(std::string p)
+{
+	// Unified separator
+	for (auto& c : p)
+	{
+		if (c == '\\') c = '/';
+	}
+
+	// Remove "./"
+	while (p.rfind("./", 0) == 0)
+		p.erase(0, 2);
+
+	// Remove repeated "//"
+	for (;;)
+	{
+		auto pos = p.find("//");
+		if (pos == std::string::npos) break;
+		p.erase(pos, 1);
+	}
+
+	return p;
+}
+
+static std::string Basename(std::string p)
+{
+	p = NormalizePath(std::move(p));
+	size_t pos = p.find_last_of('/');
+	return (pos == std::string::npos) ? p : p.substr(pos + 1);
+}
+
+static bool IsAbsolutePath(const std::string& p)
+{
+	if (p.size() >= 2 && std::isalpha((unsigned char)p[0]) && p[1] == ':')
+		return true;
+	if (!p.empty() && (p[0] == '/'))
+		return true;
+	return false;
+}
+
+static std::string MakeTextureKey(const std::string& directory, const std::string& raw)
+{
+	std::string key = NormalizePath(raw);
+	if (key.empty()) return key;
+
+	if (key[0] == '*') return key; // 内包テクスチャ
+
+	if (IsAbsolutePath(key)) return key;
+
+	if (directory.empty()) return key;
+
+	return NormalizePath(directory + "/" + key);
+}
+
+static void RegisterTextureAlias(ModelAsset* asset, ID3D11ShaderResourceView* srv, const std::string& key)
+{
+	if (!srv) return;
+
+	const std::string k = NormalizePath(key);
+
+	if (k.empty()) return;
+	asset->textures[k] = srv;
+
+	const std::string base = Basename(k);
+	if (!base.empty()) asset->textures[base] = srv;
+}
+
+static void ApplySkinWeightToVertices(Vertex3d* vertices, const aiMesh* mesh, const std::unordered_map<std::string, int>& boneNameToIndex)
 {
 	if (!mesh) return;
 
@@ -554,13 +640,4 @@ static AABB ComputeLocalAABB(const aiMesh* mesh)
 	}
 
 	return { min, max };
-}
-
-static void EnsureDefaultTextures()
-{
-	if (g_defaultTexReady) return;
-	
-	g_TextureWhite.Load(L"resources/white.png");
-	g_NormalFlat.Load(L"resources/normal_flat.png");
-	g_defaultTexReady = true;
 }

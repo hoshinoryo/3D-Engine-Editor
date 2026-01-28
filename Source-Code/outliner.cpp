@@ -27,6 +27,7 @@ namespace Outliner
 	{
 		std::vector<bool> meshVisible; // visibility for each mesh
 	};
+	*/
 	
 	struct DrawerRegistry
 	{
@@ -37,7 +38,7 @@ namespace Outliner
 		DrawProc material = nullptr;
 		DrawProc custom1 = nullptr;
 	};
-	*/
+	
 
 	struct IconRegistry
 	{
@@ -65,7 +66,7 @@ namespace Outliner
 	//static const ModelAsset* g_selectedModel = nullptr;
 	static uint32_t g_selectedObjectId = 0;
 
-	//static DrawerRegistry g_drawers;
+	static DrawerRegistry g_drawers;
 	static IconRegistry g_icons;
 
 	static ID3D11ShaderResourceView* IconSRV(ViewKind kind);
@@ -78,8 +79,10 @@ namespace Outliner
 	static bool SubTreeHasMeshes(const aiScene* scene, const aiNode* node);
 	static void MeshNodeRow(ModelAsset* asset, unsigned meshIdx);
 	static void MeshNodeProjected(ModelAsset* asset, const aiNode* node);
-	static void DrawSkeletonNode(ModelAsset* asset);
 	static void DrawSkeletonSubtree(const aiNode* node, const std::unordered_set<const aiNode*>& S);
+
+	//static void const DrawMeshNode(ModelAsset* asset);
+	//static void const DrawSkeletonNode(ModelAsset* asset);
 
 	/*
 	inline void DispatchAllRegisteredDrawers(const ModelAsset* asset)
@@ -281,13 +284,16 @@ namespace Outliner
 		ImGui::PushID((int)meshIdx);
 
 		const bool hasObject = (obj != nullptr);
-		if (hasObject) ImGui::BeginDisabled(true);
-
 		bool vis = hasObject ? obj->visible : true;
+
+		if (!hasObject) ImGui::BeginDisabled(true);
+
 		if (ImGui::Checkbox("##vis", &vis))
 		{
-			obj->visible = vis;
+			if (hasObject) obj->visible = vis;
 		}
+		if (!hasObject) ImGui::EndDisabled();
+
 		ImGui::SameLine();
 
 		// Icon
@@ -360,7 +366,7 @@ namespace Outliner
 		MeshNodeProjected(asset, asset->aiScene->mRootNode);
 	}
 
-	static void DrawSkeletonNode(ModelAsset* asset)
+	void DrawSkeletonNode(ModelAsset* asset)
 	{
 		if (!asset || !asset->aiScene || !asset->aiScene->mRootNode) return;
 

@@ -11,7 +11,7 @@
 #ifndef ANIMATION_H
 #define ANIMATION_H
 
-#include "model.h"
+#include "model_asset.h"
 
 #include <string>
 #include <vector>

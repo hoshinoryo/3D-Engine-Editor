@@ -17,7 +17,7 @@
 #include <string>
 #include <DirectXMath.h>
 
-#include "model.h"
+#include "model_asset.h"
 
 namespace SkeletonUtil
 {

@@ -5,6 +5,9 @@
 
 struct ModelAsset;
 
+void ModelRenderer_Initialize();
+void ModelRenderer_Finalize();
+
 void ModelRenderer_Draw(
 	ModelAsset* asset,
 	uint32_t meshIndex,

@@ -53,20 +53,6 @@ void Default3DMaterial::SetSpecularPower(float power)
 void Default3DMaterial::SetSpecularEnabled(bool enabled)
 {
 	m_SpecularEnabled = enabled;
-
-	/*
-	static XMFLOAT4 lastColor = m_SpecularColor;
-
-	if (!m_SpecularEnabled)
-	{
-		lastColor = m_SpecularColor;
-		m_SpecularColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-	}
-	else
-	{
-		m_SpecularColor = lastColor;
-	}
-	*/
 }
 
 void Default3DMaterial::Apply(Default3DShader& shader, const DirectX::XMFLOAT3& cameraPos) const
@@ -181,7 +167,7 @@ void Default3DMaterial::DebugDraw(Default3DShader& shader, const DirectX::XMFLOA
 	//Apply(shader, cameraPos);
 }
 
-void Defaul3DMaterial_Register(Default3DMaterial* material)
+void Default3DMaterial_Register(Default3DMaterial* material)
 {
 	if (!material) return;
 	s_AllMaterials.push_back(material);
@@ -192,7 +178,7 @@ void Defaul3DMaterial_Register(Default3DMaterial* material)
 	}
 }
 
-void Defaul3DMaterial_Unregister(Default3DMaterial* material)
+void Default3DMaterial_Unregister(Default3DMaterial* material)
 {
 	if (!material) return;
 

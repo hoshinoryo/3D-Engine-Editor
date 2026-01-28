@@ -181,7 +181,7 @@ namespace EditorWindows
 		Outliner::ShutdownIcons();
 	}
 
-	std::vector<std::unique_ptr<EditorUI::EditorWindow>> EditorWindows::CreateDefaultWindows()
+	std::vector<std::unique_ptr<EditorUI::EditorWindow>> CreateDefaultWindows()
 	{
 		std::vector<std::unique_ptr<EditorUI::EditorWindow>> v;
 

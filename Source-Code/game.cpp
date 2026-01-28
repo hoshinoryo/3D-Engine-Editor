@@ -80,6 +80,7 @@ void Game_Initialize()
 
     // Model import
     g_modelTest2 = ModelAsset_Load("resources/oldfurniture/Chair02.fbx", false, 4.0f);
+    //g_modelTest2 = ModelAsset_Load("resources/flan/flan.fbx", false, 50.0f);
     g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 1.0f);
 
     SceneManager::Clear();

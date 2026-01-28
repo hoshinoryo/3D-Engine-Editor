@@ -51,17 +51,15 @@ namespace Outliner
 	void ShowSceneOutliner();
 
 	bool GetSelection(uint32_t& objectId);
-	//bool IsMeshVisible(const ModelAsset* asset, int meshIndex);
-	//void SetMeshVisible(const ModelAsset* asset, int meshIndex, bool visible);
 
 	// ---- Draw Outliner ----
 	//void DrawAiNode(const ModelAsset* asset, const aiNode* node);
 
 	// Mesh
-	//void DrawMeshNode(const ModelAsset* asset);
+	void DrawMeshNode(const ModelAsset* asset);
 
 	// Skeleton
-	//void DrawSkeletonNode(const ModelAsset* asset);	
+	void DrawSkeletonNode(const ModelAsset* asset);
 }
 
 #endif // !OUTLINER_H

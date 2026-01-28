@@ -67,8 +67,8 @@ public:
 
 extern Default3DMaterial g_DefaultSceneMaterial;
 
-void Defaul3DMaterial_Register(Default3DMaterial* material);
-void Defaul3DMaterial_Unregister(Default3DMaterial* material);
+void Default3DMaterial_Register(Default3DMaterial* material);
+void Default3DMaterial_Unregister(Default3DMaterial* material);
 
 
 #endif DEFAULT_3D_MATERIAL_H
