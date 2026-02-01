@@ -35,6 +35,7 @@
 #include "scene_manager.h"
 #include "collision.h"
 #include "debug_draw_gate.h"
+#include "gizmo_translate.h"
 
 #include <DirectXMath.h>
 
@@ -44,7 +45,7 @@ using namespace DirectX;
 // Picking pass
 static PickingPass g_PickingPass;
 static bool g_PickingReady = false;
-static uint32_t g_SelectedId = 0;
+//static uint32_t g_SelectedId = 0;
 // Outline pass
 static OutlinePostPass g_OutlinePost;
 static bool g_OutlineReady = false;
@@ -198,6 +199,7 @@ void Game_Draw()
     XMMATRIX proj = XMLoadFloat4x4(&cam.GetProj());
 
     Render3D_BeginFrame(cam);
+    GizmoTranslate::Begin(view, proj);
 
     // Picking drawing setting
     if (g_PickingReady)
@@ -223,7 +225,22 @@ void Game_Draw()
 
         if (left && !prevLeft)
         {
-            g_SelectedId = g_PickingPass.ReadBackId(ms.x, ms.y);
+            bool consumedByGizmo = GizmoTranslate::OnMouseDown(ms.x, ms.y);
+
+            if (!consumedByGizmo)
+            {
+                uint32_t pickedId = g_PickingPass.ReadBackId(ms.x, ms.y);
+                SceneManager::SetSelectedMeshObject(pickedId); // bridge from picking pass to attribute editor
+                //GizmoTranslate::OnMouseDown(ms.x, ms.y);
+            }
+        }
+        if (left && prevLeft)
+        {
+            GizmoTranslate::OnMouseDrag(ms.x, ms.y);
+        }
+        if (!left && prevLeft)
+        {
+            GizmoTranslate::OnMouseUp();
         }
 
         prevLeft = left;
@@ -236,12 +253,6 @@ void Game_Draw()
 
         const XMMATRIX world = obj.transform.ToMatrix();
         ModelRenderer_Draw(obj.asset, obj.meshIndex, world, camPos);
-        
-        /*
-        const XMMATRIX finalWorld = obj.asset->importFix * world;
-        obj.worldAABB = Collision_TransformAABB(obj.asset->meshes[obj.meshIndex].localAABB, finalWorld);
-        obj.aabbValid = true;
-        */
 
         if (DebugDraw_Allow(DebugDrawCategory::Collision))
         {
@@ -250,10 +261,15 @@ void Game_Draw()
     }
 
     // Highlight drawing
-    if (g_OutlineReady && g_SelectedId != 0)
+    if (g_OutlineReady)
     {
-        const float color[4] = { 0, 0.8f, 0.3f, 1.0f };
-        g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), g_SelectedId, 2, color);
+        MeshObject* sel = SceneManager::GetSelectedObject();
+        if (sel)
+        {
+            const float color[4] = { 0, 0.8f, 0.3f, 1.0f };
+            g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), sel->id, 2, color);
+            GizmoTranslate::Draw(*sel);
+        }
     }
 
     // Demo scene

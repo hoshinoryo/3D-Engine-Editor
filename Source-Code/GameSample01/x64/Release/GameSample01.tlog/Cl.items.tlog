@@ -19,6 +19,7 @@ D:\GM11\GameSample05_3D\editor_ui.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\R
 D:\GM11\GameSample05_3D\editor_windows.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\editor_windows.obj
 D:\GM11\GameSample05_3D\game.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\game.obj
 D:\GM11\GameSample05_3D\game_window.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\game_window.obj
+D:\GM11\GameSample05_3D\gizmo_translate.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\gizmo_translate.obj
 D:\GM11\GameSample05_3D\grid.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\grid.obj
 D:\GM11\GameSample05_3D\guide_overlay.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\guide_overlay.obj
 D:\GM11\GameSample05_3D\imgui\imgui.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\imgui.obj
@@ -32,7 +33,8 @@ D:\GM11\GameSample05_3D\key_logger.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\
 D:\GM11\GameSample05_3D\light.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\light.obj
 D:\GM11\GameSample05_3D\line_shader.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\line_shader.obj
 D:\GM11\GameSample05_3D\main.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\main.obj
-D:\GM11\GameSample05_3D\model.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\model.obj
+D:\GM11\GameSample05_3D\model_asset.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\model_asset.obj
+D:\GM11\GameSample05_3D\model_renderer.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\model_renderer.obj
 D:\GM11\GameSample05_3D\mode_management.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\mode_management.obj
 D:\GM11\GameSample05_3D\mouse.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\mouse.obj
 D:\GM11\GameSample05_3D\orbit_camera.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\orbit_camera.obj
@@ -43,16 +45,15 @@ D:\GM11\GameSample05_3D\picking_pass.cpp;D:\GM11\GameSample05_3D\GameSample01\x6
 D:\GM11\GameSample05_3D\picking_shader.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\picking_shader.obj
 D:\GM11\GameSample05_3D\player.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\player.obj
 D:\GM11\GameSample05_3D\player_camera.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\player_camera.obj
+D:\GM11\GameSample05_3D\ray_util.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\ray_util.obj
 D:\GM11\GameSample05_3D\render3d.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\render3d.obj
 D:\GM11\GameSample05_3D\sampler.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\sampler.obj
 D:\GM11\GameSample05_3D\scene.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\scene.obj
 D:\GM11\GameSample05_3D\scene_manager.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\scene_manager.obj
-D:\GM11\GameSample05_3D\shader2d.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\shader2d.obj
 D:\GM11\GameSample05_3D\shader_field.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\shader_field.obj
 D:\GM11\GameSample05_3D\skeleton.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\skeleton.obj
 D:\GM11\GameSample05_3D\skeleton_util.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\skeleton_util.obj
 D:\GM11\GameSample05_3D\skydome.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\skydome.obj
-D:\GM11\GameSample05_3D\sprite.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\sprite.obj
 D:\GM11\GameSample05_3D\system_timer.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\system_timer.obj
 D:\GM11\GameSample05_3D\texture.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\texture.obj
 D:\GM11\GameSample05_3D\unlit_shader.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\unlit_shader.obj

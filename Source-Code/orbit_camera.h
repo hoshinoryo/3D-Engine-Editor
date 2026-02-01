@@ -31,8 +31,10 @@ private:
 	float             m_CameraYaw;   // Radian
 	float             m_CameraPitch; // Radian
 
-	DirectX::XMFLOAT4X4 m_View;
-	DirectX::XMFLOAT4X4 m_Proj;
+	DirectX::XMFLOAT4X4 m_View{};
+	DirectX::XMFLOAT4X4 m_Proj{};
+	DirectX::XMFLOAT4X4 m_invView{};
+	DirectX::XMFLOAT4X4 m_invProj{};
 
 	ID3D11Buffer* m_pVSConstantBufferView = nullptr; // matrix for world to view(b1)
 	ID3D11Buffer* m_pVSConstantBufferProj = nullptr; // matrix for view to clip(b2)
@@ -44,6 +46,8 @@ private:
 
 	void HandleKeyInput(double elapsed_time, bool enableRotation);
 	void HandleMouseInput(double elapsed_time, const Mouse_State& mouseState);
+
+	void UpdateMatrices();
 
 public:
 
@@ -57,8 +61,10 @@ public:
 
 	const DirectX::XMFLOAT4X4& GetView() const override { return m_View; }
 	const DirectX::XMFLOAT4X4& GetProj() const override { return m_Proj; }
+	const DirectX::XMFLOAT4X4& GetInvView() const override { return m_invView; }
+	const DirectX::XMFLOAT4X4& GetInvProj() const override { return m_invProj; }
 	const DirectX::XMFLOAT3& GetPosition() const override { return m_CameraPosition; };
-	DirectX::XMFLOAT3 GetFront() const override;
+	const DirectX::XMFLOAT3& GetFront() const override;
 
 	float GetFov();
 

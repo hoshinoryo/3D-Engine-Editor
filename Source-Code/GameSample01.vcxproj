@@ -160,6 +160,7 @@
     <ClCompile Include="editor_windows.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="game_window.cpp" />
+    <ClCompile Include="gizmo_translate.cpp" />
     <ClCompile Include="grid.cpp" />
     <ClCompile Include="guide_overlay.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
@@ -185,6 +186,7 @@
     <ClCompile Include="picking_shader.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="player_camera.cpp" />
+    <ClCompile Include="ray_util.cpp" />
     <ClCompile Include="render3d.cpp" />
     <ClCompile Include="sampler.cpp" />
     <ClCompile Include="scene.cpp" />
@@ -210,6 +212,7 @@
     <ClInclude Include="d3d11_state_guard_util.h" />
     <ClInclude Include="debug_draw_gate.h" />
     <ClInclude Include="direct3d.h" />
+    <ClInclude Include="gizmo_translate.h" />
     <ClInclude Include="mesh_object.h" />
     <ClInclude Include="model_asset.h" />
     <ClInclude Include="model_renderer.h" />
@@ -249,6 +252,7 @@
     <ClInclude Include="picking_shader.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="player_camera.h" />
+    <ClInclude Include="ray_util.h" />
     <ClInclude Include="render3d.h" />
     <ClInclude Include="sampler.h" />
     <ClInclude Include="scene.h" />

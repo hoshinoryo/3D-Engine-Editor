@@ -19,6 +19,7 @@ D:\GM11\GameSample05_3D\editor_ui.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\D
 D:\GM11\GameSample05_3D\editor_windows.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\editor_windows.obj
 D:\GM11\GameSample05_3D\game.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\game.obj
 D:\GM11\GameSample05_3D\game_window.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\game_window.obj
+D:\GM11\GameSample05_3D\gizmo_translate.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\gizmo_translate.obj
 D:\GM11\GameSample05_3D\grid.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\grid.obj
 D:\GM11\GameSample05_3D\guide_overlay.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\guide_overlay.obj
 D:\GM11\GameSample05_3D\imgui\imgui.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\imgui.obj
@@ -44,6 +45,7 @@ D:\GM11\GameSample05_3D\picking_pass.cpp;D:\GM11\GameSample05_3D\GameSample01\x6
 D:\GM11\GameSample05_3D\picking_shader.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\picking_shader.obj
 D:\GM11\GameSample05_3D\player.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\player.obj
 D:\GM11\GameSample05_3D\player_camera.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\player_camera.obj
+D:\GM11\GameSample05_3D\ray_util.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\ray_util.obj
 D:\GM11\GameSample05_3D\render3d.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\render3d.obj
 D:\GM11\GameSample05_3D\sampler.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\sampler.obj
 D:\GM11\GameSample05_3D\scene.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Debug\scene.obj

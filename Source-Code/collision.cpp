@@ -345,11 +345,6 @@ bool CollisionSystem::ResolveAgainstScene(
 
 		for (const AABB& s : g_Colliders)
 		{
-			//if (!obj.visible) continue;
-			//if (!obj.aabbValid) continue;
-
-			//const AABB& s = obj.worldAABB;
-
 			Hit hit = Collision_IsHitAABB(playerAABB, s);
 			if (!hit.isHit) continue;
 

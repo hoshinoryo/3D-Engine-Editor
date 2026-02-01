@@ -26,6 +26,7 @@
 #include "unlit_shader.h"
 #include "animation.h"
 #include "demo_scene.h"
+#include "draw3d.h"
 
 #pragma comment(lib, "xinput.lib")
 
@@ -74,7 +75,8 @@ int APIENTRY WinMain(
 	Scene_Initialize();
 
 	Demo_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
-	Grid_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
+	//Grid_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
+	Draw3d_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
 	//Outline_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
 
 	// Debug Mode
@@ -167,7 +169,8 @@ int APIENTRY WinMain(
 	Animation_ReleaseSkinningCB();
 
 	//Outline_Finalize();
-	Grid_Finalize();
+	//Grid_Finalize();
+	Draw3d_Finalize();
 	Demo_Finalize();
 	Scene_Finalize();
 	Sampler_Finalize();

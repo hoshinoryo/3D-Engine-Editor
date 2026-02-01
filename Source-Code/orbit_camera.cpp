@@ -203,15 +203,8 @@ void OrbitCamera::HandleMouseInput(double elapsed_time, const Mouse_State& mouse
 	m_LastMouseY = mouseState.y;
 }
 
-void OrbitCamera::Update(double elasped_time)
+void OrbitCamera::UpdateMatrices()
 {
-	// get mouse status
-	Mouse_State mouseState;
-	Mouse_GetState(&mouseState);
-
-	HandleKeyInput(elasped_time, m_KeyRotationEnabled);
-	HandleMouseInput(elasped_time, mouseState);
-
 	// recalculating camera position
 	float sinPitch = sinf(m_CameraPitch);
 	float cosPitch = cosf(m_CameraPitch);
@@ -231,36 +224,46 @@ void OrbitCamera::Update(double elasped_time)
 	XMVECTOR up = XMLoadFloat3(&m_CameraUp);
 
 	// ビュー座標変換行列の作成
-	XMMATRIX mtxView = XMMatrixLookAtLH(
-		position, //camera pos
-		target, //focus point
-		up//up dir
-	);
-
-	XMStoreFloat4x4(&m_View, mtxView);
-	ID3D11DeviceContext* ctx = Direct3D_GetContext();
-	XMFLOAT4X4 viewT;
-	XMStoreFloat4x4(&viewT, XMMatrixTranspose(mtxView));
-	ctx->UpdateSubresource(m_pVSConstantBufferView, 0, nullptr, &viewT, 0, 0);
+	XMMATRIX view = XMMatrixLookAtLH(position, target, up);
+	XMStoreFloat4x4(&m_View, view);
+	XMMATRIX invView = XMMatrixInverse(nullptr, view);
+	XMStoreFloat4x4(&m_invView, invView);
 
 	// Perspective array
 	float fovAngleY = XMConvertToRadians(m_CameraFov);
 	float aspectRatio = (float)Direct3D_GetBackBufferWidth() / Direct3D_GetBackBufferHeight();
 	float nearZ = 0.1f;
 	float farZ = 100.0f;
-	XMMATRIX mtxPerspective = XMMatrixPerspectiveFovLH(fovAngleY, aspectRatio, nearZ, farZ);
+	XMMATRIX proj = XMMatrixPerspectiveFovLH(fovAngleY, aspectRatio, nearZ, farZ);
+	XMStoreFloat4x4(&m_Proj, proj);
+	XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
+	XMStoreFloat4x4(&m_invProj, invProj);
 
-	XMStoreFloat4x4(&m_Proj, mtxPerspective);
-	XMFLOAT4X4 projT;
-	XMStoreFloat4x4(&projT, XMMatrixTranspose(mtxPerspective));
+	XMFLOAT4X4 viewT, projT;
+	XMStoreFloat4x4(&viewT, XMMatrixTranspose(view));
+	XMStoreFloat4x4(&projT, XMMatrixTranspose(proj));
+
+	ID3D11DeviceContext* ctx = Direct3D_GetContext();
+	ctx->UpdateSubresource(m_pVSConstantBufferView, 0, nullptr, &viewT, 0, 0);
 	ctx->UpdateSubresource(m_pVSConstantBufferProj, 0, nullptr, &projT, 0, 0);
-	
-	// 定数バッファを描画パイプラインに設定
+}
+
+void OrbitCamera::Update(double elasped_time)
+{
+	// get mouse status
+	Mouse_State mouseState;
+	Mouse_GetState(&mouseState);
+
+	HandleKeyInput(elasped_time, m_KeyRotationEnabled);
+	HandleMouseInput(elasped_time, mouseState);
+	UpdateMatrices();
+
+	ID3D11DeviceContext* ctx = Direct3D_GetContext();
 	ctx->VSSetConstantBuffers(1, 1, &m_pVSConstantBufferView);
 	ctx->VSSetConstantBuffers(2, 1, &m_pVSConstantBufferProj);
 }
 
-XMFLOAT3 OrbitCamera::GetFront() const
+const XMFLOAT3& OrbitCamera::GetFront() const
 {
 	XMVECTOR front = XMVector3Normalize(XMLoadFloat3(&m_CameraTarget) - XMLoadFloat3(&m_CameraPosition));
 	XMFLOAT3 out{};

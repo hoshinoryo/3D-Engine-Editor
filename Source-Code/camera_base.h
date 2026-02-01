@@ -23,8 +23,10 @@ public:
 
 	virtual const DirectX::XMFLOAT4X4& GetView() const = 0;
 	virtual const DirectX::XMFLOAT4X4& GetProj() const = 0;
+	virtual const DirectX::XMFLOAT4X4& GetInvView() const = 0;
+	virtual const DirectX::XMFLOAT4X4& GetInvProj() const = 0;
 	virtual const DirectX::XMFLOAT3& GetPosition() const = 0;
-	virtual DirectX::XMFLOAT3 GetFront() const = 0;
+	virtual const DirectX::XMFLOAT3& GetFront() const = 0;
 
 };
 

@@ -129,14 +129,18 @@ void PlayerCamera::UpdateMatrices()
 
 	XMMATRIX view = XMMatrixLookAtLH(camPos, target, worldUp);
 	XMStoreFloat4x4(&m_View, view);
+	XMMATRIX invView = XMMatrixInverse(nullptr, view);
+	XMStoreFloat4x4(&m_invView, invView);
 
 	// Perspective array
-	float fov = XMConvertToRadians(60.0f);
+	float fov = XMConvertToRadians(m_CameraFov);
 	float aspectRatio = (float)Direct3D_GetBackBufferWidth() / Direct3D_GetBackBufferHeight();
 	float nearZ = 0.1f;
 	float farZ = 100.0f;
 	XMMATRIX proj = XMMatrixPerspectiveFovLH(fov, aspectRatio, nearZ, farZ);
 	XMStoreFloat4x4(&m_Proj, proj);
+	XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
+	XMStoreFloat4x4(&m_invProj, invProj);
 
 	XMFLOAT4X4 viewT, projT;
 	XMStoreFloat4x4(&viewT, XMMatrixTranspose(view));

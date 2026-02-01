@@ -124,9 +124,6 @@
     <ClCompile Include="imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="outliner.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="scene_manager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -220,6 +217,15 @@
     <ClCompile Include="model_asset.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="outliner.cpp">
+      <Filter>ソース ファイル\editor</Filter>
+    </ClCompile>
+    <ClCompile Include="gizmo_translate.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ray_util.cpp">
+      <Filter>ソース ファイル\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_ostream.h">
@@ -305,9 +311,6 @@
     </ClInclude>
     <ClInclude Include="imgui\imstb_truetype.h">
       <Filter>ImGui</Filter>
-    </ClInclude>
-    <ClInclude Include="outliner.h">
-      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="scene_manager.h">
       <Filter>ヘッダー ファイル</Filter>
@@ -410,6 +413,15 @@
     </ClInclude>
     <ClInclude Include="model_renderer.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="outliner.h">
+      <Filter>ヘッダー ファイル\editor</Filter>
+    </ClInclude>
+    <ClInclude Include="gizmo_translate.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ray_util.h">
+      <Filter>ヘッダー ファイル\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

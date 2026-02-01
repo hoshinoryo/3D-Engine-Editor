@@ -31,6 +31,10 @@ namespace SceneManager
 	const std::vector<ModelAsset*>& AllModelAssets();
 	std::vector<MeshObject>& AllObjectsMutable();
 
+	void SetSelectedMeshObject(uint32_t id);
+	uint32_t GetSelectedId();
+	MeshObject* GetSelectedObject();
+
 	void SetVisibleByAsset(ModelAsset* asset, bool visible);
 	void SetPickableByAsset(ModelAsset* asset, bool pickable);
 

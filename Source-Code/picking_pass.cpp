@@ -14,9 +14,7 @@
 #include "picking_pass.h"
 #include "picking_shader.h"
 #include "direct3d.h"
-//#include "model.h"
 #include "model_asset.h"
-//#include "outliner.h"
 #include "axis_util.h"
 
 using namespace DirectX;

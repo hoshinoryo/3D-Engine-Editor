@@ -20,6 +20,8 @@ namespace
 	std::vector<ModelAsset*> g_assetsUniqueCache;
 	bool g_assetsDirty = true;
 	uint32_t g_nextId = 1;
+	uint32_t g_selectedId = 0;
+	//MeshObject* g_selected = nullptr;
 
 	void MarkAssetsDirty()
 	{
@@ -68,6 +70,8 @@ namespace SceneManager
 
 	void UnregisterMeshObject(uint32_t objectId)
 	{
+		if (g_selectedId == objectId) g_selectedId = 0;
+
 		auto it = std::remove_if(
 			g_meshObjects.begin(),
 			g_meshObjects.end(),
@@ -118,6 +122,22 @@ namespace SceneManager
 		return g_meshObjects;
 	}
 
+	void SetSelectedMeshObject(uint32_t id)
+	{
+		g_selectedId = id;
+	}
+
+	uint32_t GetSelectedId()
+	{
+		return g_selectedId;
+	}
+
+	MeshObject* GetSelectedObject()
+	{
+		if (g_selectedId == 0) return nullptr;
+		return FindMeshObject(g_selectedId);
+	}
+
 	void SetVisibleByAsset(ModelAsset* asset, bool visible)
 	{
 		for (auto& o : g_meshObjects)
@@ -160,6 +180,7 @@ namespace SceneManager
 		g_assetsUniqueCache.clear();
 		g_assetsDirty = false;
 		g_nextId = 1;
+		g_selectedId = 0;
 	}
 }
 

@@ -28,8 +28,10 @@ public:
 
 	const DirectX::XMFLOAT4X4& GetView() const override { return m_View; }
 	const DirectX::XMFLOAT4X4& GetProj() const override { return m_Proj; }
+	const DirectX::XMFLOAT4X4& GetInvView() const override { return m_invView; }
+	const DirectX::XMFLOAT4X4& GetInvProj() const override { return m_invProj; }
 	const DirectX::XMFLOAT3& GetPosition() const override { return m_Position; }
-	DirectX::XMFLOAT3 GetFront() const override { return m_Front; }
+	const DirectX::XMFLOAT3& GetFront() const override { return m_Front; }
 
 	float GetYaw() const { return m_Yaw; }
 
@@ -46,6 +48,7 @@ private:
 
 	float m_Yaw   = DirectX::XMConvertToRadians(180.0f);
 	float m_Pitch = DirectX::XMConvertToRadians(20.0f);
+	float m_CameraFov = 60.0f;
 
 	float m_Distance = 6.0f;
 	float m_Height = 5.0f;
@@ -53,10 +56,13 @@ private:
 
 	float m_MouseSensitivity = 0.003f;
 
-	DirectX::XMFLOAT4X4 m_View{};
-	DirectX::XMFLOAT4X4 m_Proj{};
 	DirectX::XMFLOAT3 m_Position{};
 	DirectX::XMFLOAT3 m_Front{};
+
+	DirectX::XMFLOAT4X4 m_View{};
+	DirectX::XMFLOAT4X4 m_Proj{};
+	DirectX::XMFLOAT4X4 m_invView{};
+	DirectX::XMFLOAT4X4 m_invProj{};
 
 	ID3D11Buffer* m_pVSConstantBufferView = nullptr;
 	ID3D11Buffer* m_pVSConstantBufferProj = nullptr;
