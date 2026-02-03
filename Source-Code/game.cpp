@@ -80,7 +80,7 @@ void Game_Initialize()
     g_LightManager.SetPointLight(0, { 0.0f, 3.0f, -2.0f }, 5.0f, { 1.0f, 0.0f, 0.0f });
 
     // Model import
-    g_modelTest2 = ModelAsset_Load("resources/oldfurniture/Chair02.fbx", false, 4.0f);
+    g_modelTest2 = ModelAsset_Load("resources/oldfurniture/OldFurniturePack_new.fbx", true, 0.03f);
     //g_modelTest2 = ModelAsset_Load("resources/flan/flan.fbx", false, 50.0f);
     g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 1.0f);
 
@@ -91,7 +91,7 @@ void Game_Initialize()
     if (g_modelTest2)
     {
         TransformTRS trs;
-        trs.position = { 0.0f, 0.0f, 3.0f }; // test position
+        trs.position = { 0.0f, 0.0f, 0.0f }; // test position
 
         for (uint32_t mi = 0; mi < (uint32_t)g_modelTest2->meshes.size(); ++mi)
         {
@@ -101,7 +101,7 @@ void Game_Initialize()
     if (g_modelMaterial)
     {
         TransformTRS trs;
-        trs.position = { -3.0f, 2.0f, 5.0f }; // test position
+        trs.position = { -3.0f, 2.0f, -5.0f }; // test position
 
         for (uint32_t mi = 0; mi < (uint32_t)g_modelMaterial->meshes.size(); ++mi)
         {

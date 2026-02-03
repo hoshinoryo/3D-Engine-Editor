@@ -20,7 +20,7 @@
 ウィンドウ情報
 ----------------------------------------------------*/
 static constexpr char WINDOW_CLASS[] = "Game Window"; // メインウィンドウクラス名
-static constexpr char TITLE[] = "Fake Maya"; // DO NOT TOUCH
+static constexpr char TITLE[] = "Forge Engine Editor"; // DO NOT TOUCH
 
 constexpr int SCREEN_WIDTH = 1600;
 constexpr int SCREEN_HEIGHT = 900;

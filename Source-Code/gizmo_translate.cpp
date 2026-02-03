@@ -36,14 +36,22 @@ namespace
 
 static XMFLOAT4 AxisColor(GizmoAxis axis);
 
+// ---------------
+//  Picking Block
+// ---------------
 static Vec2 WorldToScreen(FXMVECTOR pWorld, CXMMATRIX view, CXMMATRIX proj);
 static float DisPointToSegment2D(Vec2 p, Vec2 a, Vec2 b);
+// ---------------
+//  Mapping Block
+// ---------------
 static bool RayIntersectPlane(
 	FXMVECTOR rayOrigin, FXMVECTOR rayDir,
 	FXMVECTOR planeP0, FXMVECTOR planeN,
 	float& outT
 );
 static XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir);
+
+static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FXMVECTOR axisDir);
 
 void GizmoTranslate::Begin(const XMMATRIX& view, const XMMATRIX& proj)
 {
@@ -70,6 +78,7 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 	const XMFLOAT3& p = obj->transform.position;
 	const float len = 2.5f;
 
+	// screen screen picking
 	XMVECTOR o = XMLoadFloat3(&p);
 	XMVECTOR x1 = o + XMVectorSet(len, 0, 0, 0);
 	XMVECTOR y1 = o + XMVectorSet(0, len, 0, 0);
@@ -87,7 +96,6 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 	float dz = DisPointToSegment2D(m, so, sz);
 
 	const float kPickPx = 12.0f;
-
 	g_ActiveAxis = GizmoAxis::None;
 
 	float best = kPickPx;
@@ -115,26 +123,10 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 	g_Dragging = true;
 	g_StartObjPos = obj->transform.position;
 
-	CameraBase& cam = CameraManager::GetActiveCamera();
-	XMVECTOR rayO, rayD;
-	BuildRayFromScreen(cam, mouseX, mouseY, rayO, rayD);
-
 	XMVECTOR axisDir = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
 	XMVECTOR startPos = XMLoadFloat3(&g_StartObjPos);
 
-	XMVECTOR viewDir = XMVector3Normalize(XMLoadFloat3(&cam.GetFront()));
-
-	XMVECTOR planeN = MakeDragPlaneNormal(axisDir, viewDir);
-	float t;
-	if (RayIntersectPlane(rayO, rayD, startPos, planeN, t))
-	{
-		XMVECTOR hit = rayO + rayD * t;
-		g_StartS = XMVectorGetX(XMVector3Dot(hit - startPos, axisDir));
-	}
-	else
-	{
-		g_StartS = 0.0f;
-	}
+	g_StartS = CalculateAxisProject(mouseX, mouseY, startPos, axisDir);
 
 	return true;
 }
@@ -147,24 +139,10 @@ void GizmoTranslate::OnMouseDrag(int mouseX, int mouseY)
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return;
 
-	CameraBase& cam = CameraManager::GetActiveCamera();
-
-	XMVECTOR rayO, rayD;
-	BuildRayFromScreen(cam, mouseX, mouseY, rayO, rayD);
-
 	XMVECTOR axisDir = XMLoadFloat3(&g_AxisDir);
 	XMVECTOR startPos = XMLoadFloat3(&g_StartObjPos);
 
-	XMVECTOR viewDir = XMVector3Normalize(XMLoadFloat3(&cam.GetFront()));
-
-	XMVECTOR planeN = MakeDragPlaneNormal(axisDir, viewDir);
-
-	float t;
-	if (!RayIntersectPlane(rayO, rayD, startPos, planeN, t)) return;
-
-	XMVECTOR hit = rayO + rayD * t;
-
-	float sNow = XMVectorGetX(XMVector3Dot(hit - startPos, axisDir));
+	float sNow = CalculateAxisProject(mouseX, mouseY, startPos, axisDir);
 	float delta = sNow - g_StartS;
 
 	XMVECTOR newPos = startPos + axisDir * delta;
@@ -257,55 +235,37 @@ static bool RayIntersectPlane(FXMVECTOR rayOrigin, FXMVECTOR rayDir, FXMVECTOR p
 
 XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir)
 {
-	XMVECTOR vxa = XMVector3Cross(viewDir, axisDir);
+	XMVECTOR vxa = XMVector3Cross(viewDir, axisDir); // side vector
+
 	float len = XMVectorGetX(XMVector3LengthSq(vxa));
 	if (len < 1e-6f)
 	{
 		XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 		vxa = XMVector3Cross(up, axisDir);
 	}
-	XMVECTOR n = XMVector3Cross(axisDir, vxa);
+
+	XMVECTOR n = XMVector3Cross(axisDir, vxa); // normal vector
+
 	return XMVector3Normalize(n);
 }
 
-/*
-static float DistanceRayToAxis(FXMVECTOR rayOrigin, FXMVECTOR rayDir, FXMVECTOR axisOrigin, FXMVECTOR axisDir)
+static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FXMVECTOR axisDir)
 {
-	XMVECTOR w0 = rayOrigin - axisOrigin;
+	CameraBase& cam = CameraManager::GetActiveCamera();
 
-	float a = XMVectorGetX(XMVector3Dot(rayDir, rayDir));
-	float b = XMVectorGetX(XMVector3Dot(rayDir, axisDir));
-	float c = XMVectorGetX(XMVector3Dot(axisDir, axisDir));
-	float d = XMVectorGetX(XMVector3Dot(rayDir, w0));
-	float e = XMVectorGetX(XMVector3Dot(axisDir, w0));
+	XMVECTOR rayO, rayD;
+	BuildRayFromScreen(cam, mouseX, mouseY, rayO, rayD);
+	
+	XMVECTOR viewDir = XMVector3Normalize(XMLoadFloat3(&cam.GetFront()));
 
-	float denom = a * c - b * b;
-	if (fabs(denom) < 1e-15) return FLT_MAX;
-
-	float sc = (b * e - c * d) / denom;
-
-	XMVECTOR pRay = rayOrigin + sc * rayDir;
-	XMVECTOR pAxis = axisOrigin;
-
-	return XMVectorGetX(XMVector3Length(pRay - pAxis));
+	// build plane normal
+	XMVECTOR planeN = MakeDragPlaneNormal(axisDir, viewDir);
+	float t;
+	if (RayIntersectPlane(rayO, rayD, startPos, planeN, t))
+	{
+		XMVECTOR hit = rayO + rayD * t;
+		return XMVectorGetX(XMVector3Dot(hit - startPos, axisDir));
+	}
+	
+	return 0.0f;
 }
-
-// Closest point P = axisOrigin + s * axisDir
-static float GetClosestPointParamOnAxis(FXMVECTOR rayOrigin, FXMVECTOR rayDir, FXMVECTOR axisOrigin, FXMVECTOR axisDir)
-{
-	XMVECTOR w0 = rayOrigin - axisOrigin;
-
-	float a = XMVectorGetX(XMVector3Dot(rayDir, rayDir));
-	float b = XMVectorGetX(XMVector3Dot(rayDir, axisDir));
-	float c = XMVectorGetX(XMVector3Dot(axisDir, axisDir));
-	float d = XMVectorGetX(XMVector3Dot(rayDir, w0));
-	float e = XMVectorGetX(XMVector3Dot(axisDir, w0));
-
-	float denom = a * c - b * b;
-	if (fabs(denom) < 1e-15) return 0.0f;
-
-	float s = (b * e - c * d) / denom;
-
-	return s;
-}
-*/
