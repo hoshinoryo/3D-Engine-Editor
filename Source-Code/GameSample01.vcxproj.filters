@@ -226,6 +226,9 @@
     <ClCompile Include="ray_util.cpp">
       <Filter>ソース ファイル\utils</Filter>
     </ClCompile>
+    <ClCompile Include="assimp_node_util.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_ostream.h">
@@ -421,6 +424,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="ray_util.h">
+      <Filter>ヘッダー ファイル\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="assimp_node_util.h">
       <Filter>ヘッダー ファイル\utils</Filter>
     </ClInclude>
   </ItemGroup>

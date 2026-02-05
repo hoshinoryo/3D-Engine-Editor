@@ -53,7 +53,8 @@ void OutlinePostPass::DrawModel(
 {
     if (!m_pContext || !idSRV || selectedId == 0) return;
 
-    D3D11StateGuard guard(m_pContext,
+    D3D11StateGuard guard;
+    guard.Begin(m_pContext,
         D3D11StateGuard::Shaders |
         D3D11StateGuard::InputLayout |
         D3D11StateGuard::Topology |
@@ -72,5 +73,7 @@ void OutlinePostPass::DrawModel(
     m_pContext->Draw(3, 0);
 
     guard.UnbindPSSRV0();
+
+    guard.End();
 }
 

@@ -32,7 +32,7 @@ struct MeshObject
 	ModelAsset* asset = nullptr;
 	uint32_t meshIndex = 0;
 
-	TransformTRS transform;
+	TransformTRS transform; // instance/world TRS
 
 	bool visible = true;
 	bool pickable = true;

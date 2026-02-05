@@ -14,18 +14,18 @@
 
 struct TransformTRS
 {
-	DirectX::XMFLOAT3 position{ 0, 0, 0 };
-	DirectX::XMFLOAT3 rotationDeg{ 0, 0, 0 };
-	DirectX::XMFLOAT3 scale{ 1, 1, 1 };
+	DirectX::XMFLOAT3 position{ 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT4 rotationQuat{ 0.0f, 0.0f, 0.0f, 1.0f };
+	DirectX::XMFLOAT3 scale{ 1.0f, 1.0f, 1.0f };
 
 	DirectX::XMMATRIX ToMatrix() const
 	{
-		const float pitch = DirectX::XMConvertToRadians(rotationDeg.x);
-		const float yaw = DirectX::XMConvertToRadians(rotationDeg.y);
-		const float roll = DirectX::XMConvertToRadians(rotationDeg.z);
+		//const float pitch = DirectX::XMConvertToRadians(rotationQuat.x);
+		//const float yaw = DirectX::XMConvertToRadians(rotationQuat.y);
+		//const float roll = DirectX::XMConvertToRadians(rotationQuat.z);
 
 		const DirectX::XMMATRIX S = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-		const DirectX::XMMATRIX R = DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
+		const DirectX::XMMATRIX R = DirectX::XMMatrixRotationQuaternion(DirectX::XMLoadFloat4(&rotationQuat));
 		const DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
 
 		return S * R * T; // DO NOT TOUCH!!

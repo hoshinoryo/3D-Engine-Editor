@@ -29,7 +29,8 @@ namespace
 	XMMATRIX g_View;
 	XMMATRIX g_Proj;
 
-	XMFLOAT3 g_StartObjPos{};
+	XMFLOAT3 g_StartWorldPos{};
+	XMFLOAT3 g_StartGizmoPos{};
 	XMFLOAT3 g_AxisDir{};
 	float g_StartS = 0.0f;
 }
@@ -52,6 +53,7 @@ static bool RayIntersectPlane(
 static XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir);
 
 static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FXMVECTOR axisDir);
+static XMFLOAT3 GetTranslationFromMatrix(XMMATRIX m);
 
 void GizmoTranslate::Begin(const XMMATRIX& view, const XMMATRIX& proj)
 {
@@ -61,7 +63,14 @@ void GizmoTranslate::Begin(const XMMATRIX& view, const XMMATRIX& proj)
 
 void GizmoTranslate::Draw(const MeshObject& obj)
 {
-	const XMFLOAT3& p = obj.transform.position;
+	if (!obj.asset) return;
+	XMMATRIX instanceWorld = obj.transform.ToMatrix();
+	XMMATRIX nodeToModel   = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+	XMMATRIX world         = nodeToModel * instanceWorld;
+	//XMMATRIX finalWorld = obj.asset ? (obj.asset->importFix * world) : world;
+
+	XMFLOAT3 p = GetTranslationFromMatrix(world);
+
 	const float len = 2.5f;
 
 	Draw3d_MakeLine(p, { p.x + len, p.y, p.z }, AxisColor(GizmoAxis::X));
@@ -75,7 +84,13 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return false;
 
-	const XMFLOAT3& p = obj->transform.position;
+	XMMATRIX instanceWorld = obj->transform.ToMatrix();
+	XMMATRIX nodeToModel   = XMLoadFloat4x4(&obj->asset->meshes[obj->meshIndex].nodeToModel);
+	XMMATRIX world         = nodeToModel * instanceWorld;
+	//XMMATRIX finalWorld = obj->asset ? (obj->asset->importFix * world) : world;
+
+	const XMFLOAT3& p = GetTranslationFromMatrix(world);
+
 	const float len = 2.5f;
 
 	// screen screen picking
@@ -121,12 +136,13 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 	if (g_ActiveAxis == GizmoAxis::None) return false;
 
 	g_Dragging = true;
-	g_StartObjPos = obj->transform.position;
+	g_StartWorldPos = obj->transform.position;
+	g_StartGizmoPos = p;
 
-	XMVECTOR axisDir = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
-	XMVECTOR startPos = XMLoadFloat3(&g_StartObjPos);
+	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
+	XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
 
-	g_StartS = CalculateAxisProject(mouseX, mouseY, startPos, axisDir);
+	g_StartS = CalculateAxisProject(mouseX, mouseY, gizmoPosV, axisDirV);
 
 	return true;
 }
@@ -139,13 +155,14 @@ void GizmoTranslate::OnMouseDrag(int mouseX, int mouseY)
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return;
 
-	XMVECTOR axisDir = XMLoadFloat3(&g_AxisDir);
-	XMVECTOR startPos = XMLoadFloat3(&g_StartObjPos);
+	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
+	XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
 
-	float sNow = CalculateAxisProject(mouseX, mouseY, startPos, axisDir);
+	float sNow = CalculateAxisProject(mouseX, mouseY, gizmoPosV, axisDirV);
 	float delta = sNow - g_StartS;
 
-	XMVECTOR newPos = startPos + axisDir * delta;
+	XMVECTOR startWorld = XMLoadFloat3(&g_StartWorldPos);
+	XMVECTOR newPos = startWorld + axisDirV * delta;
 
 	XMStoreFloat3(&obj->transform.position, newPos);
 	obj->aabbValid = false;
@@ -256,7 +273,8 @@ static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FX
 	XMVECTOR rayO, rayD;
 	BuildRayFromScreen(cam, mouseX, mouseY, rayO, rayD);
 	
-	XMVECTOR viewDir = XMVector3Normalize(XMLoadFloat3(&cam.GetFront()));
+	XMFLOAT3 f = cam.GetFront();
+	XMVECTOR viewDir = XMVector3Normalize(XMLoadFloat3(&f));
 
 	// build plane normal
 	XMVECTOR planeN = MakeDragPlaneNormal(axisDir, viewDir);
@@ -268,4 +286,11 @@ static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FX
 	}
 	
 	return 0.0f;
+}
+
+static XMFLOAT3 GetTranslationFromMatrix(XMMATRIX m)
+{
+	XMFLOAT3 t{};
+	XMStoreFloat3(&t, m.r[3]);
+	return t;
 }

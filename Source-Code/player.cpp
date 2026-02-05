@@ -135,7 +135,8 @@ void Player::Draw(const XMFLOAT3& cameraPosition)
 	XMMATRIX trans = XMMatrixTranslationFromVector(pos);
 	XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 
-	XMMATRIX world = modelFix * scale * rot * trans;
+	//XMMATRIX world = modelFix * scale * rot * trans;
+	XMMATRIX world = rot * trans;
 
 	if (m_AnimPlayer)
 	{
@@ -144,7 +145,10 @@ void Player::Draw(const XMFLOAT3& cameraPosition)
 
 	for (uint32_t mi = 0; mi < (uint32_t)m_Asset->meshes.size(); ++mi)
 	{
-		ModelRenderer_Draw(m_Asset, mi, world, cameraPosition);
+		XMMATRIX nodeToModel = XMLoadFloat4x4(&m_Asset->meshes[mi].nodeToModel);
+		XMMATRIX finalWorld  = nodeToModel * world;
+
+		ModelRenderer_Draw(m_Asset, mi, finalWorld, cameraPosition);
 	}
 /*
 #if defined(DEBUG) || defined(_DEBUG)

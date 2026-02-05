@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="animation.cpp" />
+    <ClCompile Include="assimp_node_util.cpp" />
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="axis_util.cpp" />
     <ClCompile Include="camera_manager.cpp" />
@@ -203,6 +204,7 @@
   <ItemGroup>
     <ClInclude Include="aabb_provider.h" />
     <ClInclude Include="animation.h" />
+    <ClInclude Include="assimp_node_util.h" />
     <ClInclude Include="Audio.h" />
     <ClInclude Include="axis_util.h" />
     <ClInclude Include="camera_base.h" />

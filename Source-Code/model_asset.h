@@ -52,6 +52,8 @@ struct MeshAsset
 
 	bool skinned = false;
 	AABB localAABB{};
+
+	DirectX::XMFLOAT4X4 nodeToModel; // accumulated matrix
 };
 
 // fbxƒtƒ@ƒCƒ‹‚²‚Æ‚ÉŠÇ—‚³‚ê‚Ä‚¢‚é

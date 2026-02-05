@@ -227,7 +227,7 @@ namespace // anonymous namespace
 				changed = true;
 
 			// rotation
-			if (ImGui::DragFloat3("Rotation", &trs.rotationDeg.x, rotStep))
+			if (ImGui::DragFloat3("Rotation", &trs.rotationQuat.x, rotStep))
 				changed = true;
 
 			static bool s_uniformScale = false;
@@ -260,7 +260,7 @@ namespace // anonymous namespace
 			ImGui::SameLine();
 			if (ImGui::Button("Reset Rotation"))
 			{
-				trs.rotationDeg = { 0, 0, 0 };
+				trs.rotationQuat = { 0, 0, 0, 1 };
 				changed = true;
 			}
 			ImGui::SameLine();

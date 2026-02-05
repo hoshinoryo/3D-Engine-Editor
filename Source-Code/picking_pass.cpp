@@ -78,6 +78,8 @@ void PickingPass::Begin(const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& 
         D3D11StateGuard::Topology
     );
 
+    //m_StateGuard.Begin(m_pContext, D3D11StateGuard::All);
+
     // Set picking targets
     m_pContext->OMSetRenderTargets(1, &m_IdRTV, m_DepthDSV);
     m_pContext->RSSetViewports(1, &m_VP);
@@ -114,7 +116,7 @@ void PickingPass::DrawAsset(ModelAsset* asset, uint32_t meshIndex, const DirectX
     //XMMATRIX axisFix = GetAxisConversion(UpFromBool(asset->sourceYup), UpAxis::Y_Up);
     //XMMATRIX importScale = XMMatrixScaling(asset->importScale, asset->importScale, asset->importScale);
     //XMMATRIX finalWorld = importScale * axisFix * world;
-    const XMMATRIX finalWorld = asset->importFix * world;
+    const XMMATRIX finalWorld = world;
 
     m_PickingShader.SetParams(finalWorld, m_View, m_Proj, objectId);
 

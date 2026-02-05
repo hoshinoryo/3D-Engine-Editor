@@ -42,9 +42,14 @@ void Skydome_Draw()
 {
 	Direct3D_BeginSkydome();
 
-	for (uint32_t mi = 0; mi < (uint32_t)g_pModelSky->meshes.size(); ++mi)
+	const XMMATRIX instanceWorld = XMMatrixTranslationFromVector(XMLoadFloat3(&g_Position));
+
+	for (uint32_t mi = 0; mi < (uint32_t)g_pModelSky->meshes.size(); mi++)
 	{
-		ModelRenderer_UnlitDraw(g_pModelSky, mi, XMMatrixTranslationFromVector(XMLoadFloat3(&g_Position)), { 1.0f, 1.0f, 1.0f, 1.0f });
+		const XMMATRIX nodeToModel = XMLoadFloat4x4(&g_pModelSky->meshes[mi].nodeToModel);
+		const XMMATRIX world = nodeToModel * instanceWorld;
+
+		ModelRenderer_UnlitDraw(g_pModelSky, mi, world, { 1.0f, 1.0f, 1.0f, 1.0f });
 	}
 
 	Direct3D_EndSkydome();

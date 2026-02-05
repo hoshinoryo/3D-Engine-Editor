@@ -249,29 +249,51 @@ namespace Outliner
 		const bool hasChildren = (node->mNumChildren > 0);
 		const bool hasMeshes = NodeHasMeshes(node);
 
-		if (!hasChildren && hasMeshes) // leaf
+		if (hasMeshes) // leaf
 		{
-			for (unsigned int i = 0; i < node->mNumMeshes; ++i)
+			bool childrenHaveMeshes = false;
+			for (unsigned int i = 0; i < node->mNumChildren; i++)
 			{
-				MeshNodeRow(asset, node->mMeshes[i]);
+				if (SubTreeHasMeshes(asset->aiScene, node->mChildren[i]))
+				{
+					childrenHaveMeshes = true;
+					break;
+				}
+				//MeshNodeRow(asset, node->mMeshes[i]);
+			}
+
+			if (!childrenHaveMeshes)
+			{
+				// leaves node
+				for (unsigned int i = 0; i < node->mNumMeshes; i++)
+				{
+					MeshNodeRow(asset, node->mMeshes[i]);
+				}
+			}
+			else
+			{
+				// middle node
+				if (ImGui::TreeNodeEx(nodeLabel, ImGuiTreeNodeFlags_OpenOnArrow))
+				{
+					for (unsigned int i = 0; i < node->mNumMeshes; i++)
+					{
+						MeshNodeRow(asset, node->mMeshes[i]);
+					}
+
+					for (unsigned int c = 0; c < node->mNumChildren; c++)
+					{
+						MeshNodeProjected(asset, node->mChildren[c]);
+					}
+					ImGui::TreePop();
+				}
 			}
 		}
 		else
 		{
-			ImGuiTreeNodeFlags flags =
-				ImGuiTreeNodeFlags_OpenOnArrow |
-				ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
-			bool open = ImGui::TreeNodeEx(nodeLabel, flags);
-
-			if (open)
+			// middle node but has mesh node children
+			for (unsigned int c = 0; c < node->mNumChildren; ++c)
 			{
-				for (unsigned int c = 0; c < node->mNumChildren; ++c)
-				{
-					MeshNodeProjected(asset, node->mChildren[c]);
-				}
-
-				ImGui::TreePop();
+				MeshNodeProjected(asset, node->mChildren[c]);
 			}
 		}
 

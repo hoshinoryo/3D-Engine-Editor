@@ -40,6 +40,5 @@ namespace SkeletonUtil
 	void BuildBoneNameToIndexTable(const aiScene* scene, std::unordered_map<std::string, int>& outMap);
 }
 
-
 #endif // SKELETON_UTIL_H
 

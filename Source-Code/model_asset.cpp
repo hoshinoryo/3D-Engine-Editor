@@ -17,6 +17,7 @@
 #include "default3Dmaterial.h"
 #include "skeleton_util.h"
 #include "axis_util.h"
+#include "assimp_node_util.h"
 #include "texture.h"
 
 using namespace DirectX;
@@ -63,6 +64,10 @@ ModelAsset* ModelAsset_Load(const char* filename, bool yUp, float scale)
 	const XMMATRIX axisFix = GetAxisConversion(UpFromBool(asset->sourceYup), UpAxis::Y_Up);
 	const XMMATRIX importScaleM = XMMatrixScaling(asset->importScale, asset->importScale, asset->importScale);
 	asset->importFix = importScaleM * axisFix; // import fix only do once
+	
+	// nodeToModel contain importFix
+	std::vector<XMFLOAT4X4> nodeToModel;
+	AssimpUtil::BuildNodeToModelPerMesh(asset->aiScene, asset->importFix, nodeToModel);
 
 	asset->meshes.resize(asset->aiScene->mNumMeshes);
 
@@ -74,6 +79,7 @@ ModelAsset* ModelAsset_Load(const char* filename, bool yUp, float scale)
 		out.skinned = (mesh->mNumBones > 0);
 		out.materialIndex = mesh->mMaterialIndex;
 		out.localAABB = ComputeLocalAABB(mesh);
+		out.nodeToModel = nodeToModel[m];
 
 		// Vertex buffer
 		Vertex3d* vertex = new Vertex3d[mesh->mNumVertices];

@@ -166,10 +166,12 @@ namespace SceneManager
 				continue;
 			}
 
-			const XMMATRIX world = obj.transform.ToMatrix();
-			const XMMATRIX finalWorld = obj.asset->importFix * world;
+			//const XMMATRIX world = obj.transform.ToMatrix();
+			const XMMATRIX instanceWorld = obj.transform.ToMatrix();
+			const XMMATRIX nodeToModel   = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+			const XMMATRIX world         = nodeToModel * instanceWorld;
 
-			obj.worldAABB = Collision_TransformAABB(obj.asset->meshes[obj.meshIndex].localAABB, finalWorld);
+			obj.worldAABB = Collision_TransformAABB(obj.asset->meshes[obj.meshIndex].localAABB, world);
 			obj.aabbValid = true;
 		}
 	}

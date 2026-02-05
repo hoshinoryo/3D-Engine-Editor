@@ -50,7 +50,6 @@ static bool g_PickingReady = false;
 static OutlinePostPass g_OutlinePost;
 static bool g_OutlineReady = false;
 
-
 static ModelAsset* g_modelTest2 = nullptr;
 static ModelAsset* g_modelMaterial = nullptr;
 
@@ -81,7 +80,6 @@ void Game_Initialize()
 
     // Model import
     g_modelTest2 = ModelAsset_Load("resources/oldfurniture/OldFurniturePack_new.fbx", true, 0.03f);
-    //g_modelTest2 = ModelAsset_Load("resources/flan/flan.fbx", false, 50.0f);
     g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 1.0f);
 
     SceneManager::Clear();
@@ -90,21 +88,51 @@ void Game_Initialize()
 
     if (g_modelTest2)
     {
-        TransformTRS trs;
-        trs.position = { 0.0f, 0.0f, 0.0f }; // test position
-
+        //TransformTRS trs;
+        //trs.position = { 0.0f, 0.0f, 0.0f }; // test position
+        
         for (uint32_t mi = 0; mi < (uint32_t)g_modelTest2->meshes.size(); ++mi)
         {
+            /*
+            XMMATRIX n2m = XMLoadFloat4x4(&g_modelTest2->meshes[mi].nodeToModel);
+
+            XMVECTOR s, r, t;
+            if (XMMatrixDecompose(&s, &r, &t, n2m))
+            {
+                TransformTRS trs;
+                XMStoreFloat3(&trs.position, t);
+                XMStoreFloat4(&trs.rotationQuat, r);
+                XMStoreFloat3(&trs.scale, s);
+
+                uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
+            }
+            */
+            TransformTRS trs;
             uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
         }
     }
     if (g_modelMaterial)
     {
-        TransformTRS trs;
-        trs.position = { -3.0f, 2.0f, -5.0f }; // test position
+        //TransformTRS trs;
+        //trs.position = { -3.0f, 2.0f, -5.0f }; // test position
 
         for (uint32_t mi = 0; mi < (uint32_t)g_modelMaterial->meshes.size(); ++mi)
         {
+            /*
+            XMMATRIX n2m = XMLoadFloat4x4(&g_modelMaterial->meshes[mi].nodeToModel);
+
+            XMVECTOR s, r, t;
+            if (XMMatrixDecompose(&s, &r, &t, n2m))
+            {
+                TransformTRS trs;
+                XMStoreFloat3(&trs.position, t);
+                XMStoreFloat4(&trs.rotationQuat, r);
+                XMStoreFloat3(&trs.scale, s);
+
+                uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
+            }
+            */
+            TransformTRS trs;
             uint32_t id = SceneManager::RegisterMeshObject(g_modelMaterial, mi, trs, true);
         }
     }
@@ -201,6 +229,7 @@ void Game_Draw()
     Render3D_BeginFrame(cam);
     GizmoTranslate::Begin(view, proj);
 
+    
     // Picking drawing setting
     if (g_PickingReady)
     {
@@ -210,7 +239,10 @@ void Game_Draw()
         {
             if (!obj.visible || !obj.pickable || !obj.asset) continue;
 
-            const XMMATRIX world = obj.transform.ToMatrix();
+            XMMATRIX instanceWorld  = obj.transform.ToMatrix();
+            XMMATRIX nodeToModel    = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+            XMMATRIX world          = nodeToModel * instanceWorld;
+
             g_PickingPass.DrawAsset(obj.asset, obj.meshIndex, world, obj.id);
         }
 
@@ -251,7 +283,14 @@ void Game_Draw()
     {
         if (!obj.visible || !obj.asset) continue;
 
-        const XMMATRIX world = obj.transform.ToMatrix();
+        //const XMMATRIX world = obj.transform.ToMatrix();
+        
+        const XMMATRIX instanceWorld = obj.transform.ToMatrix();
+        const XMMATRIX nodeToModel    = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+        const XMMATRIX world          = nodeToModel * instanceWorld;
+        
+        //XMMATRIX debugWorld = XMMatrixTranslation(0, 0, 0);
+
         ModelRenderer_Draw(obj.asset, obj.meshIndex, world, camPos);
 
         if (DebugDraw_Allow(DebugDrawCategory::Collision))
