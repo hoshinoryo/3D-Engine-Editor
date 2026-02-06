@@ -166,7 +166,6 @@ namespace SceneManager
 				continue;
 			}
 
-			//const XMMATRIX world = obj.transform.ToMatrix();
 			const XMMATRIX instanceWorld = obj.transform.ToMatrix();
 			const XMMATRIX nodeToModel   = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
 			const XMMATRIX world         = nodeToModel * instanceWorld;

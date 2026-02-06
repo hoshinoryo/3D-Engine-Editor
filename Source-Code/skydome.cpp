@@ -25,7 +25,7 @@ static XMFLOAT3 g_Position{};
 
 void Skydome_Initialize()
 {
-	g_pModelSky = ModelAsset_Load("resources/sky.fbx", false, 100.0f);
+	g_pModelSky = ModelAsset_Load("resources/sky.fbx", true, 1.0f);
 }
 
 void Skydome_Finalize()

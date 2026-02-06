@@ -21,16 +21,31 @@ public:
 	enum Mask : uint32_t
 	{
 		None          = 0,
+
+		// OM
 		RenderTargets = 1u << 0, // OMGetRenderTargets / OMSetRenderTargets
 		BlendStates   = 1u << 1, // OMGetBlendState
 		DepthStencil  = 1u << 2, // OMGetDepthStencilState
+
+		// RS
 		Rasterizer    = 1u << 3, // RSGetState
 		Viewports     = 1u << 4, // RSGetViewports
-		Topology      = 1u << 5, // IAGetPrimitiveTopology
-		InputLayout   = 1u << 6, // IAGetInoutLayout
-		Shaders       = 1u << 7, // VSGetShader / PSGetShader
-		PS_SRV0       = 1u << 8, // PSGetShaderResources (slot0)
-		All           = 0xFFFFFFFFu
+		Scissors      = 1u << 5, // RSGetScissorRects
+
+		// IA
+		Topology      = 1u << 6, // IAGetPrimitiveTopology
+		InputLayout   = 1u << 7, // IAGetInoutLayout
+		IABuffers     = 1u << 8, // IAGetVertexBuffers / IAGetIndexBuffer
+
+		// Shaders
+		Shaders       = 1u << 9, // VSGetShader / PSGetShader
+		PS_SRV0       = 1u << 10, // PSGetShaderResources (slot0)
+
+		// all masks
+		All           = RenderTargets | BlendStates | DepthStencil |
+		                Rasterizer | Viewports | Scissors |
+		                Topology | InputLayout | IABuffers |
+		                Shaders | PS_SRV0
 	};
 
 	D3D11StateGuard() = default;
@@ -48,12 +63,17 @@ public:
 
 private:
 
+	static UINT CalcBoundCountRTV(ID3D11RenderTargetView* const* rtvs, UINT maxCount);
+
+private:
+
 	ID3D11DeviceContext* m_pContext = nullptr;
 	uint32_t m_Mask = 0;
 	bool m_Active = false;
 
 	// OM RT/DS
-	ID3D11RenderTargetView* m_OldRTV = nullptr;
+	ID3D11RenderTargetView* m_OldRTVs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT]{};
+	UINT                    m_OldNumRT = 0;
 	ID3D11DepthStencilView* m_OldDSV = nullptr;
 
 	// Blend
@@ -69,12 +89,25 @@ private:
 	ID3D11RasterizerState* m_OldRS = nullptr;
 
 	// Viewport
-	D3D11_VIEWPORT m_OldVP{};
-	UINT m_OldNumVP = 1;
+	D3D11_VIEWPORT m_OldVPs[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE]{};
+	UINT m_OldNumVP = 0;
 
+	// Scissors
+	D3D11_RECT m_OldScissors[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE]{};
+	UINT m_OldNumScissors = 0;
+	
 	// IA
 	ID3D11InputLayout* m_OldIL = nullptr;
-	D3D11_PRIMITIVE_TOPOLOGY m_OldTopo = D3D10_PRIMITIVE_TOPOLOGY_UNDEFINED;
+	D3D11_PRIMITIVE_TOPOLOGY m_OldTopo = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
+	// IA buffers (VB/IB)
+	ID3D11Buffer* m_OldVBs[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT]{};
+	UINT m_OldVBStrides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT]{};
+	UINT m_OldVBOffsets[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT]{};
+
+	ID3D11Buffer* m_OldIB = nullptr;
+	DXGI_FORMAT   m_OldIBFormat = DXGI_FORMAT_UNKNOWN;
+	UINT          m_OldIBOffset = 0;
 
 	// Shaders
 	ID3D11VertexShader* m_OldVS = nullptr;

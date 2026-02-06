@@ -24,4 +24,6 @@ void Draw3d_MakeCross(const DirectX::XMFLOAT3& center, float size, const DirectX
 void Draw3d_MakeWireBox(const DirectX::XMFLOAT3& center, const DirectX::XMFLOAT3& halfSize, const DirectX::XMFLOAT4& color);
 void Draw3d_MakeWireSphere(const DirectX::XMFLOAT3& center, float radius, const DirectX::XMFLOAT4& color, int segments = 32);
 
+void Draw3d_MakeThickLine(const DirectX::XMFLOAT3& p0, const DirectX::XMFLOAT3& p1, float thickness, const DirectX::XMFLOAT4& color);
+
 #endif // DRAW3D_H

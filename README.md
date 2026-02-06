@@ -1,144 +1,158 @@
 # 自制引擎编辑器（Custom Engine Editor）
 
-### 项目简介 | プロジェクト概要 | Project Overview
+## 项目简介 | プロジェクト概要 | Project Overview
 
-这是一个基于 DirectX的自制3D引擎编辑器原型，目的是在有限时间内，从零实现一个具备“编辑器感”的最小可用工具。
+这是一个基于 DirectX 的自制 3D 引擎编辑器原型，目标是在有限时间内，从零实现一个具备明确“编辑器感”的最小可用工具。
 
-项目重点不在于完成一个游戏，而是围绕引擎结构设计、编辑器交互、数据组织与可扩展性进行实践。
+项目重点并非完成一款游戏，而是围绕 **引擎结构设计、编辑器交互、数据组织方式以及可扩展性** 进行实践，尝试构建一条能够被持续扩展的编辑工作流。
 
-目前该编辑器已经可以完成场景中对象的管理、Transform 编辑、调试可视化、编辑器 / 运行模式区分等基础功能，并正在逐步向真正可保存、可复用的编辑工具方向推进。
-
-------
-
-本プロジェクトは、DirectXを用いてゼロから制作している3D自作エンジン編集エディターです。
-完成したゲームを作ることではなく、「編集ツールとして成立する最小構成」を実装することを目的としています。
-
-現在は、シーン管理、Transform 編集、デバッグ描画、Editor / Game モードの切り替えなど、「ツールらしさ」を感じられる基本機能を中心に実装しており、今後はデータの保存・再利用を前提とした設計へ発展させていく予定です。
+目前，该编辑器已经具备场景对象管理、Transform 编辑、Gizmo 操作、调试可视化、编辑器 / 运行模式区分等核心功能，并通过 Pass 化的处理流程，将「编辑器行为」与「渲染、选择、调试逻辑」明确拆分，逐步向真正可维护、可扩展的工具型引擎演进。
 
 ------
 
-This project is a custom-built 3D engine editor prototype based on DirectX, developed from scratch.
+本プロジェクトは、DirectX を用いてゼロから制作している 3D 自作エンジン編集エディターです。
+完成したゲームを作ることを目的とせず、「編集ツールとして成立する最小構成」を実装することを重視しています。
 
-Rather than building a complete game, the goal is to create a Minimum Viable Editor that demonstrates core concepts of engine architecture, editor interaction, and data-driven design.
-
-At its current stage, the editor supports scene object management, transform editing, debug visualization,  and editor/game mode separation, and is being extended step by step toward a practical, reusable editing tool.
-
-### 项目背景与设计目标 | 企画背景・設計方針 |Background & Design Goals
-
-以学习和理解引擎/工具开发流程为核心目标，从“程序如何被编辑器使用”的角度反向设计引擎结构，所有功能均以可扩展、可维护、可解释为前提实现，在时间有限的情况下，优先实现最小但完整的一条编辑链路。
+シーン管理、Transform 編集、Gizmo 操作、デバッグ描画、Editor / Game モードの切り替えなど、編集作業に直結する機能を中心に実装しており、処理は Pass 単位で整理されています。
+これにより、編集器特有の処理と描画・入力・判定ロジックを明確に分離しています。
 
 ------
 
-エンジン・ツール開発の流れを実装を通して理解すること
+This project is a custom-built 3D engine editor prototype based on DirectX, developed entirely from scratch.
 
-「エディタから使われるエンジン」という視点で設計
+Rather than building a complete game, the focus is on creating a tool-oriented engine that supports editor-driven workflows.
+Core features such as scene management, transform editing, gizmo manipulation, debug visualization, and editor/game mode separation are already implemented.
 
+A key design concept of this project is the **pass-based structure**, which separates rendering, picking, editor interaction, and debug visualization into independent processing stages, enabling clearer responsibilities and future extensibility.
+
+------
+
+## 项目背景与设计目标 | 企画背景・設計方針 | Background & Design Goals
+
+以理解引擎与工具开发流程为核心目标，从「编辑器如何驱动引擎」的角度反向设计系统结构。
+
+所有功能均以 **可扩展性、可维护性、以及可解释性** 为前提进行实现，在时间受限的条件下，优先完成一条从“可视 → 可选 → 可编辑 → 可验证”的完整编辑链路。
+
+------
+
+エンジン・ツール開発の流れを、設計から実装まで一貫して理解すること
+「エディタから使われるエンジン」という視点での構造設計
 拡張性・保守性・説明可能性を重視
-
-制限された期間の中で、最小だが一貫した編集フローを優先
+最小構成であっても、編集フローとして成立することを優先
 
 ------
 
-Focus on learning engine & tool development through implementation
-
-Design the engine from the perspective of editor-driven usage
-
-Emphasis on extensibility, maintainability, and clarity
-
+Focus on learning engine and tool development through hands-on implementation
+Design the engine from an editor-first perspective
+Emphasize extensibility, maintainability, and clarity
 Prioritize a minimal but complete editing workflow under time constraints
 
-### 当前已实现功能 | 実装済み機能 | Implemented Features
+------
 
-#### 场景与对象管理 | シーン・オブジェクト管理 | Scene & Object Management
+## 当前已实现功能 | 実装済み機能 | Implemented Features
 
-统一管理场景中的 MeshObject
+### 场景与对象管理 | シーン・オブジェクト管理 | Scene & Object Management
 
-对象唯一ID分配与选择状态管理
-
-基于SceneManager的集中式管理结构
-
-#### Transform 系统（TRS） | Transform（TRS）編集システム | Transform (TRS) System
-
-统一的Transform数据结构（Translation / Rotation / Scale）
-
-编辑器中可直接修改对象的 TRS 参数
-
-为后续导入 / 导出与序列化做结构准备
-
-#### 编辑器 UI（ImGui） | エディタ UI（ImGui） | Editor UI (ImGui)
-
-基于 ImGui 的编辑窗口
-
-编辑器友好的即时反馈设计
-
-明确区分“编辑用途 UI”与“运行时逻辑”
-
-#### Editor / Game 模式区分 | Editor / Game モード切り替え | Editor / Game Mode Separation
-
-应用模式（AppMode）管理
-
-编辑器专用功能仅在 Editor模式下启用
-
-为后续 Play / Edit 切换打下基础
-
-#### Debug Draw 系统 | デバッグ描画システム | Debug Draw System
-
-分类管理的DebugDrawCategory
-
-可开关的调试绘制设置
-
-根据当前模式与类别判断是否绘制
-
-用于Collision/辅助可视化的基础设施
-
-#### ModelAsset / MeshObject 分离设计 | ModelAsset / MeshObject 分離設計 | ModelAsset / MeshObject Separation
-
-ModelAsset：资源层（可被多个对象引用）
-
-MeshObject：场景实例层
-
-为减少重复加载与后续序列化做准备
-
-### 当前设计重点 | 現在の設計上の重点 | Current Design Focus
-
-结构清晰优先于功能数量
-
-所有系统都以“将来能被保存 / 复原”为前提
-
-编辑器 ≠ 游戏逻辑，二者严格区分
-
-明确每一层（Asset / Object / Scene / Editor）的职责
+- 统一管理场景中的 MeshObject
+- 对象唯一 ID 分配与选择状态管理
+- 基于 SceneManager 的集中式管理结构
+- 编辑器与运行时共享同一场景数据结构
 
 ------
 
-機能数よりも構造の明確さを優先
+### Transform 系统（TRS） | Transform（TRS）編集システム | Transform (TRS) System
 
-将来的なシリアライズを前提とした設計
-
-エディタ機能とゲームロジックの分離
-
-各レイヤーの責務を明確に定義
+- 统一的 Transform 数据结构（Translation / Rotation / Scale）
+- 编辑器中可直接数值编辑 TRS 参数
+- 所有空间变换最终统一转换为矩阵参与渲染与判定
+- 为后续导入 / 导出与序列化提供清晰的数据边界
 
 ------
 
-Prioritize clear structure over feature count
+### Gizmo 系统（Translate） | Gizmo 操作 | Transform Gizmo (Translate)
 
-Design with future serialization in mind
+- 实现基于世界空间的 Translate Gizmo
+- 支持 X / Y / Z 轴独立选择与拖拽
+- Gizmo 操作与对象 Transform 数据直接联动
+- 通过屏幕空间与世界空间映射完成精确拖拽计算
+- 编辑器模式下专用，不影响运行时逻辑
 
-Strict separation between editor tools and game logic
+------
 
-Clearly defined responsibilities for each system layer
+### 编辑器 UI（ImGui） | エディタ UI（ImGui） | Editor UI (ImGui)
 
-### 计划中的功能 | 今後の予定 | Planned Features
+- 基于 ImGui 的编辑器窗口构成
+- 实时反馈对象状态与参数变化
+- 编辑用途 UI 与运行逻辑严格区分
+- 为后续属性扩展提供统一入口
 
-场景数据的导入 / 导出（JSON等）
+------
 
-Transform / Material 等最小序列化单元
+### Editor / Game 模式区分 | Editor / Game モード切り替え | Editor / Game Mode Separation
 
-编辑器操作流程的进一步完善
+- 统一的 AppMode 管理
+- 编辑器专用功能仅在 Editor 模式下生效
+- 为 Play / Edit 切换与工具隔离提供基础结构
 
-更明确的“工具型引擎”定位强化
+------
 
-### 备注 | 備考 | Notes
+### Pass 化处理结构 | パス分割設計 | Pass-based Architecture
 
-本项目为学习与作品展示用途，重点在于设计思路与实现过程，而非追求完整商业级功能。
+- 将编辑器中的处理流程拆分为多个 Pass
+- 不同 Pass 负责不同职责，例如：
+  - 渲染 Pass
+  - Picking Pass（对象选择判定）
+  - Gizmo 操作 Pass
+  - Debug Draw Pass
+- 每个 Pass 独立判断当前模式与启用条件
+- 有效避免编辑逻辑与渲染逻辑相互耦合
+- 为后续功能扩展提供清晰的插入点
+
+------
+
+### Debug Draw 系统 | デバッグ描画システム | Debug Draw System
+
+- 基于 DebugDrawCategory 的分类管理
+- 可开关的调试绘制设置
+- 根据当前 AppMode 与 Category 判定是否绘制
+- 用于 Collision、辅助信息等可视化验证
+
+------
+
+### ModelAsset / MeshObject 结构设计 | データ構造設計 | Data Structure Design
+
+- **ModelAsset**
+  - 代表模型资源数据
+  - 负责网格、材质等共享信息
+  - 可被多个场景对象引用
+- **MeshObject**
+  - 场景中的实例对象
+  - 持有 Transform、选择状态等实例级信息
+  - 通过指针或引用关联对应的 ModelAsset
+
+该分离结构使资源与实例职责清晰，避免重复加载，并为后续序列化、导入导出与资源管理奠定基础。
+
+------
+
+## 当前设计重点 | 現在の設計上の重点 | Current Design Focus
+
+- 结构清晰优先于功能数量
+- 所有系统均以可保存、可复原为设计前提
+- 编辑器逻辑与游戏逻辑严格区分
+- 明确 Asset / Object / Scene / Editor 各层职责
+- 通过 Pass 化结构提升可读性与可维护性
+
+------
+
+## 计划中的功能 | 今後の予定 | Planned Features
+
+- 场景数据导入 / 导出（JSON 等）
+- Transform / Material 等最小序列化单元
+- 编辑器操作流程的进一步完善
+- 工具型引擎定位的持续强化
+
+------
+
+## 备注 | 備考 | Notes
+
+本项目用于学习与作品展示，重点在于设计思路、结构划分与实现过程，而非追求完整的商业级功能。

@@ -80,7 +80,7 @@ void Game_Initialize()
 
     // Model import
     g_modelTest2 = ModelAsset_Load("resources/oldfurniture/OldFurniturePack_new.fbx", true, 0.03f);
-    g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 1.0f);
+    g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 100.0f);
 
     SceneManager::Clear();
     CollisionSystem::ClearColliders();
@@ -93,46 +93,17 @@ void Game_Initialize()
         
         for (uint32_t mi = 0; mi < (uint32_t)g_modelTest2->meshes.size(); ++mi)
         {
-            /*
-            XMMATRIX n2m = XMLoadFloat4x4(&g_modelTest2->meshes[mi].nodeToModel);
-
-            XMVECTOR s, r, t;
-            if (XMMatrixDecompose(&s, &r, &t, n2m))
-            {
-                TransformTRS trs;
-                XMStoreFloat3(&trs.position, t);
-                XMStoreFloat4(&trs.rotationQuat, r);
-                XMStoreFloat3(&trs.scale, s);
-
-                uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
-            }
-            */
             TransformTRS trs;
             uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
         }
     }
+
     if (g_modelMaterial)
     {
-        //TransformTRS trs;
-        //trs.position = { -3.0f, 2.0f, -5.0f }; // test position
-
         for (uint32_t mi = 0; mi < (uint32_t)g_modelMaterial->meshes.size(); ++mi)
         {
-            /*
-            XMMATRIX n2m = XMLoadFloat4x4(&g_modelMaterial->meshes[mi].nodeToModel);
-
-            XMVECTOR s, r, t;
-            if (XMMatrixDecompose(&s, &r, &t, n2m))
-            {
-                TransformTRS trs;
-                XMStoreFloat3(&trs.position, t);
-                XMStoreFloat4(&trs.rotationQuat, r);
-                XMStoreFloat3(&trs.scale, s);
-
-                uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
-            }
-            */
             TransformTRS trs;
+            trs.position = { -3.0f, 2.0f, -5.0f }; // test position
             uint32_t id = SceneManager::RegisterMeshObject(g_modelMaterial, mi, trs, true);
         }
     }

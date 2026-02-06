@@ -184,3 +184,12 @@ int APIENTRY WinMain(
 
 	return 0;
 }
+
+// ------------------------
+// Frame
+// „¥„Ÿ Skydome Pass
+// „¥„Ÿ Main Scene Pass
+// „¥„Ÿ Picking Pass
+// „¥„Ÿ Outline Pass
+// „¤„Ÿ Gizmo / Debug Pass
+// ------------------------

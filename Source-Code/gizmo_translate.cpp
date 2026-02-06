@@ -16,6 +16,7 @@
 #include "ray_util.h"
 #include "direct3d.h"
 #include "camera_base.h"
+#include "collision.h"
 
 using namespace DirectX;
 
@@ -33,6 +34,9 @@ namespace
 	XMFLOAT3 g_StartGizmoPos{};
 	XMFLOAT3 g_AxisDir{};
 	float g_StartS = 0.0f;
+
+	XMFLOAT3 g_PivotToTransformOffset{};
+	XMFLOAT3 g_DraggingPivot{};
 }
 
 static XMFLOAT4 AxisColor(GizmoAxis axis);
@@ -54,6 +58,8 @@ static XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir);
 
 static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FXMVECTOR axisDir);
 static XMFLOAT3 GetTranslationFromMatrix(XMMATRIX m);
+static XMFLOAT3 GetGizmoPivotWorld(const MeshObject& obj);
+
 
 void GizmoTranslate::Begin(const XMMATRIX& view, const XMMATRIX& proj)
 {
@@ -64,18 +70,22 @@ void GizmoTranslate::Begin(const XMMATRIX& view, const XMMATRIX& proj)
 void GizmoTranslate::Draw(const MeshObject& obj)
 {
 	if (!obj.asset) return;
-	XMMATRIX instanceWorld = obj.transform.ToMatrix();
-	XMMATRIX nodeToModel   = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
-	XMMATRIX world         = nodeToModel * instanceWorld;
-	//XMMATRIX finalWorld = obj.asset ? (obj.asset->importFix * world) : world;
 
-	XMFLOAT3 p = GetTranslationFromMatrix(world);
+	XMFLOAT3 p;
+	if (g_Dragging)
+	{
+		p = g_DraggingPivot;
+	}
+	else
+	{
+		p = GetGizmoPivotWorld(obj);
+	}
 
 	const float len = 2.5f;
 
-	Draw3d_MakeLine(p, { p.x + len, p.y, p.z }, AxisColor(GizmoAxis::X));
-	Draw3d_MakeLine(p, { p.x, p.y + len, p.z }, AxisColor(GizmoAxis::Y));
-	Draw3d_MakeLine(p, { p.x, p.y, p.z + len }, AxisColor(GizmoAxis::Z));
+	Draw3d_MakeThickLine(p, { p.x + len, p.y, p.z }, 0.1f, AxisColor(GizmoAxis::X));
+	Draw3d_MakeThickLine(p, { p.x, p.y + len, p.z }, 0.1f, AxisColor(GizmoAxis::Y));
+	Draw3d_MakeThickLine(p, { p.x, p.y, p.z + len }, 0.1f, AxisColor(GizmoAxis::Z));
 }
 
 // picking
@@ -84,12 +94,19 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return false;
 
-	XMMATRIX instanceWorld = obj->transform.ToMatrix();
-	XMMATRIX nodeToModel   = XMLoadFloat4x4(&obj->asset->meshes[obj->meshIndex].nodeToModel);
-	XMMATRIX world         = nodeToModel * instanceWorld;
-	//XMMATRIX finalWorld = obj->asset ? (obj->asset->importFix * world) : world;
+	XMFLOAT3 pivot = obj->worldAABB.GetCenter();
+	g_StartWorldPos = obj->transform.position;
+	g_StartGizmoPos = pivot;
+	g_DraggingPivot = pivot;
 
-	const XMFLOAT3& p = GetTranslationFromMatrix(world);
+	g_PivotToTransformOffset = {
+		g_StartWorldPos.x - pivot.x,
+		g_StartWorldPos.y - pivot.y,
+		g_StartWorldPos.z - pivot.z
+	};
+
+	//const XMFLOAT3& p = GetTranslationFromMatrix(world);
+	XMFLOAT3 p = GetGizmoPivotWorld(*obj); // pivit = visible center
 
 	const float len = 2.5f;
 
@@ -136,8 +153,6 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 	if (g_ActiveAxis == GizmoAxis::None) return false;
 
 	g_Dragging = true;
-	g_StartWorldPos = obj->transform.position;
-	g_StartGizmoPos = p;
 
 	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
 	XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
@@ -156,15 +171,25 @@ void GizmoTranslate::OnMouseDrag(int mouseX, int mouseY)
 	if (!obj) return;
 
 	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
-	XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
+	//XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
+	XMVECTOR startPivotV = XMLoadFloat3(&g_StartGizmoPos);
 
-	float sNow = CalculateAxisProject(mouseX, mouseY, gizmoPosV, axisDirV);
+	float sNow = CalculateAxisProject(mouseX, mouseY, startPivotV, axisDirV);
 	float delta = sNow - g_StartS;
 
-	XMVECTOR startWorld = XMLoadFloat3(&g_StartWorldPos);
-	XMVECTOR newPos = startWorld + axisDirV * delta;
+	XMVECTOR newPivotV = startPivotV + axisDirV * delta;
 
-	XMStoreFloat3(&obj->transform.position, newPos);
+	XMFLOAT3 newPivot;
+	XMStoreFloat3(&newPivot, newPivotV);
+
+	g_DraggingPivot = newPivot;
+
+	obj->transform.position = {
+		newPivot.x + g_PivotToTransformOffset.x,
+		newPivot.y + g_PivotToTransformOffset.y,
+		newPivot.z + g_PivotToTransformOffset.z,
+	};
+
 	obj->aabbValid = false;
 }
 
@@ -293,4 +318,24 @@ static XMFLOAT3 GetTranslationFromMatrix(XMMATRIX m)
 	XMFLOAT3 t{};
 	XMStoreFloat3(&t, m.r[3]);
 	return t;
+}
+
+XMFLOAT3 GetGizmoPivotWorld(const MeshObject& obj)
+{
+	// world AABB center = what you actully see
+	if (obj.aabbValid)
+	{
+		return obj.worldAABB.GetCenter();
+	}
+
+	XMMATRIX instanceWorld = obj.transform.ToMatrix();
+	XMMATRIX nodeToModel = XMMatrixIdentity();
+
+	if (obj.asset && obj.meshIndex < obj.asset->meshes.size())
+	{
+		nodeToModel = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+	}
+
+	XMMATRIX world = nodeToModel * instanceWorld;
+	return GetTranslationFromMatrix(world);
 }
