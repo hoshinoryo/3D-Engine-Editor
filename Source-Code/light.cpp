@@ -14,11 +14,14 @@
 #include "direct3d.h"
 #include "imgui/imgui.h"
 #include "draw3d.h"
+#include "debug_draw_gate.h"
 
 using namespace DirectX;
 
 
 LightManager g_LightManager;
+
+static float WrapDeg360(float deg);
 
 
 void LightManager::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
@@ -126,6 +129,11 @@ void LightManager::BindAllLightsToPipeline()
 
 void LightManager::DebugDraw()
 {
+	if (!DebugDraw_Allow(DebugDrawCategory::Light))
+	{
+		return;
+	}
+
 	// --- Ambient Light Control ---
 	if (ImGui::CollapsingHeader("Ambient Light", ImGuiTreeNodeFlags_DefaultOpen))
 	{
@@ -146,14 +154,17 @@ void LightManager::DebugDraw()
 		}
 
 		XMFLOAT4 dir = m_DirectionalData.Directional;
-		if (ImGui::SliderFloat3("Direction##Dir", &dir.x, -1.0f, 1.0f))
-		{
-			m_DirectionalData.Directional = dir;
+		bool changed = false;
+		changed |= ImGui::DragFloat("Yaw", &m_DirYawDeg, 1.0f, 0.0, 360.0f);
+		changed |= ImGui::DragFloat("Pitch", &m_DirPitchDeg, 1.0f, 0.0, 360.0f);
 
-			XMVECTOR v = XMLoadFloat4(&m_DirectionalData.Directional);
-			v = XMVector3Normalize(v);
-			XMStoreFloat4(&m_DirectionalData.Directional, v);
-		}
+		if (changed) UpdateDirectionalFromAngle();
+
+		ImGui::Text("Direction = (%.3f, %.3f, %.3f)",
+			m_DirectionalData.Directional.x,
+			m_DirectionalData.Directional.y,
+			m_DirectionalData.Directional.z
+		);
 	}
 
 	// --- Point Light Control ---
@@ -186,6 +197,11 @@ void LightManager::DebugDraw()
 
 void LightManager::DebugDrawPointLight() const
 {
+	if (!DebugDraw_Allow(DebugDrawCategory::Light))
+	{
+		return;
+	}
+
 	for (int i = 0; i < m_PointLights.count; ++i)
 	{
 		const auto& pl = m_PointLights.point_light[i];
@@ -196,4 +212,73 @@ void LightManager::DebugDrawPointLight() const
 
 		Draw3d_MakeWireSphere(pl.LightPosition, radius, sphereColor);
 	}
+}
+
+void LightManager::UpdateDirectionalFromAngle()
+{
+	m_DirYawDeg = WrapDeg360(m_DirYawDeg);
+	m_DirPitchDeg = WrapDeg360(m_DirPitchDeg);
+
+	const float yaw = XMConvertToRadians(m_DirYawDeg);
+	const float pitch = XMConvertToRadians(m_DirPitchDeg);
+
+	XMVECTOR base = XMVector3Normalize(XMLoadFloat3(& m_DirBase));
+
+	XMMATRIX R = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
+
+	XMVECTOR dir = XMVector3TransformNormal(base, R);
+	dir = XMVector3Normalize(dir);
+
+	XMFLOAT3 d3;
+	XMStoreFloat3(&d3, dir);
+	m_DirectionalData.Directional = { d3.x, d3.y, d3.z, 0.0f };
+}
+
+void LightManager::DebugDrawDirectionalLight() const
+{
+	if (!DebugDraw_Allow(DebugDrawCategory::Light))
+	{
+		return;
+	}
+
+	XMVECTOR vDir = XMLoadFloat4(&m_DirectionalData.Directional);
+	vDir = XMVector3Normalize(vDir);
+
+	const XMVECTOR upY = XMVectorSet(0, 1, 0, 0);
+	const XMVECTOR upZ = XMVectorSet(0, 0, 1, 0);
+
+	XMVECTOR vSide = XMVector3Cross(upY, vDir);
+	if (XMVectorGetX(XMVector3LengthSq(vSide)) < 1e-6f)
+	{
+		vSide = XMVector3Cross(upZ, vDir);
+	}
+
+	vSide = XMVector3Normalize(vSide);
+
+	const float lineHalfLen = 8.0f;
+	const float spacing = 5.0f;
+
+	XMVECTOR vCenter = XMVectorSet(0.0f, 10.0f, 0.0f, 1.0f);
+
+	XMFLOAT3 pA, pB;
+
+	for (int i = -1; i <= 1; i++)
+	{
+		XMVECTOR vOffset = vSide * (spacing * float(i));
+
+		XMVECTOR v0 = vCenter + vOffset - vDir * lineHalfLen;
+		XMVECTOR v1 = vCenter + vOffset + vDir * lineHalfLen;
+
+		XMStoreFloat3(&pA, v0);
+		XMStoreFloat3(&pB, v1);
+
+		Draw3d_MakeLine(pA, pB, m_DirectionalData.Color);
+	}
+}
+
+static float WrapDeg360(float deg)
+{
+	while (deg >= 360.0f) deg -= 360.0f;
+	while (deg < 0.0f) deg += 360.0f;
+	return deg;
 }

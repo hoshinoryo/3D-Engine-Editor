@@ -133,10 +133,10 @@ void Player::Draw(const XMFLOAT3& cameraPosition)
 	XMMATRIX modelFix = XMMatrixRotationY(XM_PI);
 
 	XMMATRIX trans = XMMatrixTranslationFromVector(pos);
-	XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+	//XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 
 	//XMMATRIX world = modelFix * scale * rot * trans;
-	XMMATRIX world = rot * trans;
+	XMMATRIX world = modelFix * rot * trans;
 
 	if (m_AnimPlayer)
 	{
@@ -150,11 +150,7 @@ void Player::Draw(const XMFLOAT3& cameraPosition)
 
 		ModelRenderer_Draw(m_Asset, mi, finalWorld, cameraPosition);
 	}
-/*
-#if defined(DEBUG) || defined(_DEBUG)
-	Collision_DebugDraw(m_WorldAABB, { 0.0f, 0.0f, 1.0f, 1.0f });
-#endif
-*/
+
 	if (DebugDraw_Allow(DebugDrawCategory::Collision))
 	{
 		Collision_DebugDraw(m_WorldAABB, { 0.0f, 0.0f, 1.0f, 1.0f });

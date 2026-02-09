@@ -42,6 +42,7 @@ OrbitCamera::OrbitCamera()
 {
 	m_CameraPosition = { 0.0f, 0.0f, 0.0f };
 	m_CameraUp = { 0.0f, 1.0f, 0.0f };
+	m_CameraFront = { 0.0, 0.0f, 1.0f };
 
 	m_CameraFov = 60.0f;
 
@@ -246,6 +247,10 @@ void OrbitCamera::UpdateMatrices()
 	ID3D11DeviceContext* ctx = Direct3D_GetContext();
 	ctx->UpdateSubresource(m_pVSConstantBufferView, 0, nullptr, &viewT, 0, 0);
 	ctx->UpdateSubresource(m_pVSConstantBufferProj, 0, nullptr, &projT, 0, 0);
+
+	// front = normalize(target - position)
+	XMVECTOR front = XMVector3Normalize(XMLoadFloat3(&m_CameraTarget) - XMLoadFloat3(&m_CameraPosition));
+	XMStoreFloat3(&m_CameraFront, front);
 }
 
 void OrbitCamera::Update(double elasped_time)
@@ -263,6 +268,7 @@ void OrbitCamera::Update(double elasped_time)
 	ctx->VSSetConstantBuffers(2, 1, &m_pVSConstantBufferProj);
 }
 
+/*
 const XMFLOAT3& OrbitCamera::GetFront() const
 {
 	XMVECTOR front = XMVector3Normalize(XMLoadFloat3(&m_CameraTarget) - XMLoadFloat3(&m_CameraPosition));
@@ -270,6 +276,7 @@ const XMFLOAT3& OrbitCamera::GetFront() const
 	XMStoreFloat3(&out, front);
 	return out;
 }
+*/
 
 float OrbitCamera::GetFov()
 {

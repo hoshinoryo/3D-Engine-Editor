@@ -157,6 +157,7 @@
     <ClCompile Include="demo_scene.h" />
     <ClCompile Include="direct3d.cpp" />
     <ClCompile Include="draw3d.cpp" />
+    <ClCompile Include="editor_tool_draw_setting.cpp" />
     <ClCompile Include="editor_ui.cpp" />
     <ClCompile Include="editor_windows.cpp" />
     <ClCompile Include="game.cpp" />
@@ -214,6 +215,8 @@
     <ClInclude Include="d3d11_state_guard_util.h" />
     <ClInclude Include="debug_draw_gate.h" />
     <ClInclude Include="direct3d.h" />
+    <ClInclude Include="editor_tool_draw_gate.h" />
+    <ClInclude Include="editor_tool_draw_setting.h" />
     <ClInclude Include="gizmo_translate.h" />
     <ClInclude Include="mesh_object.h" />
     <ClInclude Include="model_asset.h" />

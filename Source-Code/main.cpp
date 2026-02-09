@@ -155,9 +155,7 @@ int APIENTRY WinMain(
 
 	} while (msg.message != WM_QUIT);
 	
-#if defined(DEBUG) || defined(_DEBUG)
 	Collision_DebugFinalize();
-#endif
 
 	Debug_Imgui_Finalize();
 

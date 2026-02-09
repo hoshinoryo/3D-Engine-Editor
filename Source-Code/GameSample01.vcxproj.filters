@@ -44,6 +44,12 @@
     <Filter Include="ヘッダー ファイル\camera">
       <UniqueIdentifier>{9b11da1b-0f69-46a9-9399-16a80fe6ba08}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\mode_management">
+      <UniqueIdentifier>{12132234-7964-4c3d-9a67-0d1eed196e7f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\mode_management">
+      <UniqueIdentifier>{c2269a69-66d9-41ec-9977-249067441529}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -202,12 +208,6 @@
     <ClCompile Include="guide_overlay.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="debug_draw_setting.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="mode_management.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="direct3d.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -227,7 +227,16 @@
       <Filter>ソース ファイル\utils</Filter>
     </ClCompile>
     <ClCompile Include="assimp_node_util.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="debug_draw_setting.cpp">
+      <Filter>ソース ファイル\mode_management</Filter>
+    </ClCompile>
+    <ClCompile Include="mode_management.cpp">
+      <Filter>ソース ファイル\mode_management</Filter>
+    </ClCompile>
+    <ClCompile Include="editor_tool_draw_setting.cpp">
+      <Filter>ソース ファイル\mode_management</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -393,15 +402,6 @@
     <ClInclude Include="guide_overlay.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="debug_draw_setting.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="mode_management.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="debug_draw_gate.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="direct3d.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -428,6 +428,21 @@
     </ClInclude>
     <ClInclude Include="assimp_node_util.h">
       <Filter>ヘッダー ファイル\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_draw_gate.h">
+      <Filter>ヘッダー ファイル\mode_management</Filter>
+    </ClInclude>
+    <ClInclude Include="editor_tool_draw_setting.h">
+      <Filter>ヘッダー ファイル\mode_management</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_draw_setting.h">
+      <Filter>ヘッダー ファイル\mode_management</Filter>
+    </ClInclude>
+    <ClInclude Include="mode_management.h">
+      <Filter>ヘッダー ファイル\mode_management</Filter>
+    </ClInclude>
+    <ClInclude Include="editor_tool_draw_gate.h">
+      <Filter>ヘッダー ファイル\mode_management</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

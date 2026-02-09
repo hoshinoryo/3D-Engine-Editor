@@ -22,6 +22,7 @@ private:
 
 	DirectX::XMFLOAT3 m_CameraPosition;
 	DirectX::XMFLOAT3 m_CameraUp;
+	DirectX::XMFLOAT3 m_CameraFront;
 
 	float m_CameraFov;
 
@@ -64,7 +65,7 @@ public:
 	const DirectX::XMFLOAT4X4& GetInvView() const override { return m_invView; }
 	const DirectX::XMFLOAT4X4& GetInvProj() const override { return m_invProj; }
 	const DirectX::XMFLOAT3& GetPosition() const override { return m_CameraPosition; };
-	const DirectX::XMFLOAT3& GetFront() const override;
+	const DirectX::XMFLOAT3& GetFront() const override { return m_CameraFront; }
 
 	float GetFov();
 

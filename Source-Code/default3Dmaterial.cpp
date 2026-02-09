@@ -71,7 +71,6 @@ void Default3DMaterial::DebugDraw(Default3DShader& shader, const DirectX::XMFLOA
 	(void)shader;
 	(void)cameraPos;
 
-	//ImGui::Begin("Material Manager");
 
 	if (s_AllMaterials.empty())
 	{

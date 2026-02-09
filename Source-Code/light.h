@@ -67,6 +67,12 @@ private:
 	//SpecularLightData m_SpecularData{};
 	PointLightList m_PointLights{};
 
+	// Directional light initial direction
+	DirectX::XMFLOAT3 m_DirBase = { 1.0f, -1.0f, 0.0f };
+	// For UI
+	float m_DirYawDeg = 0.0f;
+	float m_DirPitchDeg = 0.0f;
+
 public:
 
 	LightManager() = default;
@@ -90,6 +96,8 @@ public:
 
 	void DebugDraw();
 	void DebugDrawPointLight() const;
+	void UpdateDirectionalFromAngle();
+	void DebugDrawDirectionalLight() const;
 };
 
 extern LightManager g_LightManager; // Global light management declaration

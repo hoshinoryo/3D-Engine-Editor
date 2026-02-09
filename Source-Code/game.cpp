@@ -259,8 +259,6 @@ void Game_Draw()
         const XMMATRIX instanceWorld = obj.transform.ToMatrix();
         const XMMATRIX nodeToModel    = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
         const XMMATRIX world          = nodeToModel * instanceWorld;
-        
-        //XMMATRIX debugWorld = XMMatrixTranslation(0, 0, 0);
 
         ModelRenderer_Draw(obj.asset, obj.meshIndex, world, camPos);
 
@@ -289,7 +287,9 @@ void Game_Draw()
 
     //Grid_Draw();
 
+    // Light debug draw
     g_LightManager.DebugDrawPointLight();
+    g_LightManager.DebugDrawDirectionalLight();
 
     g_Player.Draw(camPos);
 

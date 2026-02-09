@@ -15,6 +15,7 @@
 enum class DebugDrawCategory : uint32_t
 {
 	Collision = 1u << 0,
+	Light     = 1u << 1,
 };
 
 // OR operation
@@ -24,7 +25,7 @@ inline DebugDrawCategory operator|(DebugDrawCategory a, DebugDrawCategory b)
 }
 
 // check if this flag is active
-inline bool HasFlag(uint32_t mask, DebugDrawCategory c)
+inline bool HasDebugFlag(uint32_t mask, DebugDrawCategory c)
 {
 	return (mask & (uint32_t)c) != 0;
 }
@@ -33,7 +34,8 @@ struct DebugDrawSettings
 {
 	bool enabled = true; // Main switch
 	bool editorOnly = true;
-	uint32_t categoryMask = (uint32_t)DebugDrawCategory::Collision;
+	uint32_t categoryMask = (uint32_t)DebugDrawCategory::Collision |
+		(uint32_t)DebugDrawCategory::Light;
 };
 
 DebugDrawSettings& GetDebugDrawSettings();

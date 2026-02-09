@@ -16,6 +16,7 @@
 #include "direct3d.h"
 #include "model_asset.h"
 #include "axis_util.h"
+#include "editor_tool_draw_gate.h"
 
 using namespace DirectX;
 
@@ -64,6 +65,11 @@ bool PickingPass::Resize(uint32_t width, uint32_t height)
 
 void PickingPass::Begin(const DirectX::XMMATRIX& view, const DirectX::XMMATRIX& proj)
 {
+    if (!EditorTool_Allow(EditorToolCategory::Picking))
+    {
+        return;
+    }
+
     assert(m_pContext);
 
     m_View = view;
@@ -109,13 +115,15 @@ void PickingPass::End()
 // Rendering (mesh-level)
 void PickingPass::DrawAsset(ModelAsset* asset, uint32_t meshIndex, const DirectX::XMMATRIX& world, uint32_t objectId)
 {
+    if (!EditorTool_Allow(EditorToolCategory::Picking))
+    {
+        return;
+    }
+
     if (!asset || !asset->aiScene) return;
     if (meshIndex >= asset->meshes.size()) return;
     assert(m_pContext);
 
-    //XMMATRIX axisFix = GetAxisConversion(UpFromBool(asset->sourceYup), UpAxis::Y_Up);
-    //XMMATRIX importScale = XMMatrixScaling(asset->importScale, asset->importScale, asset->importScale);
-    //XMMATRIX finalWorld = importScale * axisFix * world;
     const XMMATRIX finalWorld = world;
 
     m_PickingShader.SetParams(finalWorld, m_View, m_Proj, objectId);
@@ -134,6 +142,11 @@ void PickingPass::DrawAsset(ModelAsset* asset, uint32_t meshIndex, const DirectX
 // From mouse coordinate to return object id
 uint32_t PickingPass::ReadBackId(int mouseX, int mouseY)
 {
+    if (!EditorTool_Allow(EditorToolCategory::Picking))
+    {
+        return 0;
+    }
+
     if (!m_IdTex || !m_ReadBack1x1) return 0;
     assert(m_pContext);
 

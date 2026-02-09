@@ -17,6 +17,7 @@
 #include "direct3d.h"
 #include "camera_base.h"
 #include "collision.h"
+#include "editor_tool_draw_gate.h"
 
 using namespace DirectX;
 
@@ -63,12 +64,22 @@ static XMFLOAT3 GetGizmoPivotWorld(const MeshObject& obj);
 
 void GizmoTranslate::Begin(const XMMATRIX& view, const XMMATRIX& proj)
 {
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate))
+	{
+		return;
+	}
+
 	g_View = view;
 	g_Proj = proj;
 }
 
 void GizmoTranslate::Draw(const MeshObject& obj)
 {
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate))
+	{
+		return;
+	}
+
 	if (!obj.asset) return;
 
 	XMFLOAT3 p;
@@ -91,6 +102,11 @@ void GizmoTranslate::Draw(const MeshObject& obj)
 // picking
 bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 {
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate))
+	{
+		return false;
+	}
+
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return false;
 
@@ -165,6 +181,11 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 // calculate movement
 void GizmoTranslate::OnMouseDrag(int mouseX, int mouseY)
 {
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate))
+	{
+		return;
+	}
+
 	if (!g_Dragging) return;
 
 	MeshObject* obj = SceneManager::GetSelectedObject();

@@ -12,6 +12,7 @@
 #include "player_camera.h"
 #include "player.h"
 #include "guide_overlay.h"
+#include "scene_manager.h"
 
 using namespace DirectX;
 
@@ -76,6 +77,8 @@ namespace CameraManager
         // Set camera active and show guide
         if (g_IsPlayMode)
         {
+            SceneManager::SetSelectedMeshObject(0); // clear the selection
+
             g_PlayerCam.SetActive(true);
             g_pActiveCam = &g_PlayerCam;
 

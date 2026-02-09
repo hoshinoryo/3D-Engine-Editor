@@ -18,8 +18,8 @@
 
 using namespace DirectX;
 
-static constexpr int X_GROUND_CUBE_COUNT = 13;
-static constexpr int Z_GROUND_CUBE_COUNT = 13;
+static constexpr int X_GROUND_CUBE_COUNT = 17;
+static constexpr int Z_GROUND_CUBE_COUNT = 17;
 static constexpr int Y_WALL_CUBE_HEIGHT = 4;
 static constexpr int WALL_RING_COUNT = 2 * (X_GROUND_CUBE_COUNT + Z_GROUND_CUBE_COUNT + 2);
 static constexpr int WALL_CUBE_COUNT = WALL_RING_COUNT * Y_WALL_CUBE_HEIGHT;

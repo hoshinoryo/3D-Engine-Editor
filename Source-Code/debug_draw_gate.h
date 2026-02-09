@@ -20,7 +20,7 @@ inline bool DebugDraw_Allow(DebugDrawCategory category)
 
 	if (!s.enabled) return false;
 	if (s.editorOnly && GetAppMode() != AppMode::Editor) return false;
-	if (!HasFlag(s.categoryMask, category)) return false;
+	if (!HasDebugFlag(s.categoryMask, category)) return false;
 
 	return true;
 }
