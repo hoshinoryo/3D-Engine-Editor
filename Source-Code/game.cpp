@@ -36,6 +36,7 @@
 #include "collision.h"
 #include "debug_draw_gate.h"
 #include "gizmo_translate.h"
+#include "primitive_tool.h"
 
 #include <DirectXMath.h>
 
@@ -45,7 +46,6 @@ using namespace DirectX;
 // Picking pass
 static PickingPass g_PickingPass;
 static bool g_PickingReady = false;
-//static uint32_t g_SelectedId = 0;
 // Outline pass
 static OutlinePostPass g_OutlinePost;
 static bool g_OutlineReady = false;
@@ -178,7 +178,8 @@ void Game_Update(double elapsed_time)
 
         CollisionSystem::AddCollidersAABB(obj.worldAABB);
     }
-    Demo_AddCollidersAABB();
+    Demo_AddColliders();
+    PrimitiveTool::AppendColliders();
     // ---------------------------
 
     Skydome_SetPosition(camPos);
@@ -201,7 +202,7 @@ void Game_Draw()
     GizmoTranslate::Begin(view, proj);
 
     
-    // Picking drawing setting
+    // Picking pass
     if (g_PickingReady)
     {
         g_PickingPass.Begin(view, proj);
@@ -226,21 +227,53 @@ void Game_Draw()
         static bool prevLeft = false;
         bool left = ms.leftButton;
 
+        // Mouse down
         if (left && !prevLeft)
         {
-            bool consumedByGizmo = GizmoTranslate::OnMouseDown(ms.x, ms.y);
-
-            if (!consumedByGizmo)
+            bool consumed = false;
+            
+            if (CubeObject* selPrim = PrimitiveTool::GetSelected())
             {
-                uint32_t pickedId = g_PickingPass.ReadBackId(ms.x, ms.y);
-                SceneManager::SetSelectedMeshObject(pickedId); // bridge from picking pass to attribute editor
-                //GizmoTranslate::OnMouseDown(ms.x, ms.y);
+                consumed = GizmoTranslate::OnMouseDownExternal(selPrim->GetPositionRef(), ms.x, ms.y);
+            }
+            else
+            {
+                consumed = GizmoTranslate::OnMouseDown(ms.x, ms.y);
+
+            }
+
+            if (!consumed)
+            {
+                if (PrimitiveTool::PickFromMouse(cam, ms.x, ms.y))
+                {
+                    SceneManager::SetSelectedMeshObject(0);
+                }
+                else
+                {
+                    uint32_t pickedId = g_PickingPass.ReadBackId(ms.x, ms.y);
+                    SceneManager::SetSelectedMeshObject(pickedId); // bridge from picking pass to attribute editor
+                    PrimitiveTool::ClearSelection();
+                }
             }
         }
+
+        // Mouse drag
         if (left && prevLeft)
         {
-            GizmoTranslate::OnMouseDrag(ms.x, ms.y);
+            if (CubeObject* selPrim = PrimitiveTool::GetSelected())
+            {
+                if (GizmoTranslate::OnMouseDragExternal(selPrim->GetPositionRef(), ms.x, ms.y))
+                {
+                    selPrim->UpdateAABB();
+                }
+            }
+            else
+            {
+                GizmoTranslate::OnMouseDrag(ms.x, ms.y);
+            }
         }
+
+        // Mouse up
         if (!left && prevLeft)
         {
             GizmoTranslate::OnMouseUp();
@@ -249,12 +282,10 @@ void Game_Draw()
         prevLeft = left;
     }
 
-    // Draw all objects
+    // Draw all mesh objects
     for (auto& obj : SceneManager::AllObjects())
     {
         if (!obj.visible || !obj.asset) continue;
-
-        //const XMMATRIX world = obj.transform.ToMatrix();
         
         const XMMATRIX instanceWorld = obj.transform.ToMatrix();
         const XMMATRIX nodeToModel    = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
@@ -268,15 +299,18 @@ void Game_Draw()
         }
     }
 
-    // Highlight drawing
+    // Highlight and gizmo draw
     if (g_OutlineReady)
     {
-        MeshObject* sel = SceneManager::GetSelectedObject();
-        if (sel)
+        if (MeshObject* selMesh = SceneManager::GetSelectedObject())
         {
             const float color[4] = { 0, 0.8f, 0.3f, 1.0f };
-            g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), sel->id, 2, color);
-            GizmoTranslate::Draw(*sel);
+            g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), selMesh->id, 2, color);
+            GizmoTranslate::Draw(*selMesh);
+        }
+        else if(CubeObject* selPrim = PrimitiveTool::GetSelected())
+        {
+            GizmoTranslate::DrawExternal(selPrim->GetPosition());
         }
     }
 
@@ -284,8 +318,6 @@ void Game_Draw()
     Demo_Draw();
 
     Skydome_Draw();
-
-    //Grid_Draw();
 
     // Light debug draw
     g_LightManager.DebugDrawPointLight();

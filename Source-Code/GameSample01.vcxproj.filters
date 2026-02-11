@@ -103,9 +103,6 @@
     <ClCompile Include="texture.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="shader_field.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="light.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -238,6 +235,9 @@
     <ClCompile Include="editor_tool_draw_setting.cpp">
       <Filter>ソース ファイル\mode_management</Filter>
     </ClCompile>
+    <ClCompile Include="primitive_tool.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_ostream.h">
@@ -289,9 +289,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="texture.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="shader_field.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="light.h">
@@ -443,6 +440,9 @@
     </ClInclude>
     <ClInclude Include="editor_tool_draw_gate.h">
       <Filter>ヘッダー ファイル\mode_management</Filter>
+    </ClInclude>
+    <ClInclude Include="primitive_tool.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

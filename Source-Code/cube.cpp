@@ -7,14 +7,10 @@
 
 ==============================================================================*/
 
-
 #include "cube.h"
 #include "direct3d.h"
 #include "default3Dshader.h"
 #include "texture.h"
-
-#include <DirectXMath.h>
-
 
 using namespace DirectX;
 
@@ -40,8 +36,6 @@ struct VertexCube
 
 
 // vertexの結び方
-// unsigned shortによって頂点数が多くとも65525番目まで
-// high polygonのときunsigned intを使ってください
 static unsigned short g_CubeIndex[]
 {
 	0,  1,  2,  0,  2,  3,
@@ -146,7 +140,6 @@ void Cube_DrawMesh(const XMMATRIX& mtxWorld)
 	// インデックスバッファを描画パイプランを設定
 	g_pContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 
-	//Shader3d_SetWorldMatrix(mtxWorld); // 頂点シェーダ―にワールド座標変換行列を設定
 	g_Default3DshaderStatic.SetWorldMatrix(mtxWorld);
 
 	// プリミティブトポロジ設定

@@ -33,6 +33,11 @@ namespace GizmoTranslate
 	void OnMouseUp();
 
 	bool IsActive();
+
+	// for external
+	bool OnMouseDownExternal(DirectX::XMFLOAT3& inOutPos, int mouseX, int mouseY);
+	bool OnMouseDragExternal(DirectX::XMFLOAT3& inOutPos, int mouseX, int mouseY);
+	void DrawExternal(const DirectX::XMFLOAT3& pos);
 }
 
 #endif // GIZMO_TRANSLATE_H

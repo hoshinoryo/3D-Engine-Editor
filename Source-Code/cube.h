@@ -26,6 +26,7 @@ public:
 	void SetScale(const DirectX::XMFLOAT3& scl);
 
 	const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }
+	DirectX::XMFLOAT3& GetPositionRef() { return m_Position; }
 	const AABB& GetAABB() const override { return m_AABB; }
 
 	void UpdateAABB();

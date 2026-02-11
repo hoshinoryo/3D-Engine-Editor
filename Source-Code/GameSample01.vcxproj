@@ -188,12 +188,12 @@
     <ClCompile Include="picking_shader.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="player_camera.cpp" />
+    <ClCompile Include="primitive_tool.cpp" />
     <ClCompile Include="ray_util.cpp" />
     <ClCompile Include="render3d.cpp" />
     <ClCompile Include="sampler.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="scene_manager.cpp" />
-    <ClCompile Include="shader_field.cpp" />
     <ClCompile Include="skeleton.cpp" />
     <ClCompile Include="skeleton_util.cpp" />
     <ClCompile Include="skydome.cpp" />
@@ -257,12 +257,12 @@
     <ClInclude Include="picking_shader.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="player_camera.h" />
+    <ClInclude Include="primitive_tool.h" />
     <ClInclude Include="ray_util.h" />
     <ClInclude Include="render3d.h" />
     <ClInclude Include="sampler.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="scene_manager.h" />
-    <ClInclude Include="shader_field.h" />
     <ClInclude Include="skeleton.h" />
     <ClInclude Include="skeleton_util.h" />
     <ClInclude Include="skydome.h" />

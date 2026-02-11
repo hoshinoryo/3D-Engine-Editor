@@ -12,6 +12,7 @@
 #include "scene_manager.h"
 #include "outliner.h" 
 #include "default3Dmaterial.h"
+#include "primitive_tool.h"
 
 #include "imgui/imgui.h"
 
@@ -29,6 +30,7 @@ namespace // anonymous namespace
 		{ "Inspector",        false },
 		{ "Material Manager", false },
 		{ "Attribute Editor", true  },
+		{ "Primitive Tool",   true  },
 	};
 
 	static bool GetDefaultEnabled(const char* windowName)
@@ -315,6 +317,26 @@ namespace // anonymous namespace
 			ImGui::End();
 		}
 	};
+
+	class PrimitiveToolWindow final : public EditorUI::EditorWindow
+	{
+	public:
+
+		const char* Name() const override { return "Primitive Tool"; }
+
+		void Draw(const EditorUI::Layout& l) override
+		{
+			ImGui::SetNextWindowPos(ImVec2(1000, 600), ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
+
+			BeginWindowWithAutoFit(*this, Name());
+
+			PrimitiveTool::ToolDraw();
+
+			ImGui::End();
+		}
+
+	};
 }
 
 namespace EditorWindows
@@ -342,6 +364,7 @@ namespace EditorWindows
 		Push<InspectorWindow>(v);
 		Push<MaterialManagerWindow>(v);
 		Push<AttributeWindow>(v);
+		Push<PrimitiveToolWindow>(v);
 
 		return v;
 	}

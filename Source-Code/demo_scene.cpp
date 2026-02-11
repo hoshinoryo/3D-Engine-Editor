@@ -8,13 +8,13 @@
 
 ==============================================================================*/
 
+#include <array>
+
 #include "demo_scene.h"
 #include "cube.h"
 #include "collision.h"
 #include "debug_draw_gate.h"
-
-#include <DirectXMath.h>
-#include <array>
+#include "primitive_tool.h"
 
 using namespace DirectX;
 
@@ -40,11 +40,15 @@ void Demo_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 	g_groundCubes = GenerateGroundCubePos(g_CubeSize, -1.0f);
 	g_wallCubes = GenerateWallCubePos(g_CubeSize, -1.0f);
 
-	Demo_AddCollidersAABB();
+	PrimitiveTool::Initialize(g_CubeSize);
+
+	Demo_AddColliders();
 }
 
 void Demo_Finalize(void)
 {
+	PrimitiveTool::Finalize();
+
 	Cube_Finalize();
 }
 
@@ -69,6 +73,8 @@ void Demo_Draw()
 			Collision_DebugDraw(c.GetAABB(), { 1.0f, 0.0f, 0.0f, 1.0f });
 		}
 	}
+
+	PrimitiveTool::Draw();
 }
 
 void Demo_UpdateWorldAABB()
@@ -82,9 +88,11 @@ void Demo_UpdateWorldAABB()
 	{
 		c.UpdateAABB();
 	}
+
+	PrimitiveTool::UpdateAABB();
 }
 
-void Demo_AddCollidersAABB()
+void Demo_AddColliders()
 {
 	for (const auto& c : g_groundCubes)
 	{
@@ -95,6 +103,13 @@ void Demo_AddCollidersAABB()
 	{
 		CollisionSystem::AddCollidersAABB(c.GetAABB());
 	}
+}
+
+void Demo_RebuildColliders()
+{
+	CollisionSystem::ClearColliders();
+	Demo_AddColliders();
+	PrimitiveTool::AppendColliders();
 }
 
 static std::array<CubeObject, X_GROUND_CUBE_COUNT * Z_GROUND_CUBE_COUNT> GenerateGroundCubePos(float halfExtent, float y)

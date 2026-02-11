@@ -19,6 +19,7 @@ void Demo_Finalize(void);
 void Demo_Draw();
 
 void Demo_UpdateWorldAABB();
-void Demo_AddCollidersAABB();
+void Demo_AddColliders();
+void Demo_RebuildColliders();
 
 #endif // DEMO_SCENE_H

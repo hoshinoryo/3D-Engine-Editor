@@ -38,9 +38,13 @@ namespace
 
 	XMFLOAT3 g_PivotToTransformOffset{};
 	XMFLOAT3 g_DraggingPivot{};
+
+	XMFLOAT3* g_pExternalPos = nullptr;
+	bool g_ExternalDirty = false;
 }
 
 static XMFLOAT4 AxisColor(GizmoAxis axis);
+static void DrawGizmo(const XMFLOAT3& pivot);
 
 // ---------------
 //  Picking Block
@@ -56,6 +60,12 @@ static bool RayIntersectPlane(
 	float& outT
 );
 static XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir);
+// ----------------------
+//  Calculate Drag Block
+// ----------------------
+static bool BeginDrag(const XMFLOAT3& gizmoPivotWorld, const XMFLOAT3& targetWorldPos, int mouseX, int mouseY);
+static bool OnDrag(int mouseX, int mouseY, XMFLOAT3& inOutTargetPos);
+
 
 static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FXMVECTOR axisDir);
 static XMFLOAT3 GetTranslationFromMatrix(XMMATRIX m);
@@ -92,126 +102,34 @@ void GizmoTranslate::Draw(const MeshObject& obj)
 		p = GetGizmoPivotWorld(obj);
 	}
 
-	const float len = 2.5f;
-
-	Draw3d_MakeThickLine(p, { p.x + len, p.y, p.z }, 0.1f, AxisColor(GizmoAxis::X));
-	Draw3d_MakeThickLine(p, { p.x, p.y + len, p.z }, 0.1f, AxisColor(GizmoAxis::Y));
-	Draw3d_MakeThickLine(p, { p.x, p.y, p.z + len }, 0.1f, AxisColor(GizmoAxis::Z));
+	DrawGizmo(p);
 }
 
 // picking
 bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 {
-	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate))
-	{
-		return false;
-	}
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate)) return false;
 
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return false;
 
-	XMFLOAT3 pivot = obj->worldAABB.GetCenter();
-	g_StartWorldPos = obj->transform.position;
-	g_StartGizmoPos = pivot;
-	g_DraggingPivot = pivot;
+	XMFLOAT3 gizmoPivot = GetGizmoPivotWorld(*obj);
 
-	g_PivotToTransformOffset = {
-		g_StartWorldPos.x - pivot.x,
-		g_StartWorldPos.y - pivot.y,
-		g_StartWorldPos.z - pivot.z
-	};
-
-	//const XMFLOAT3& p = GetTranslationFromMatrix(world);
-	XMFLOAT3 p = GetGizmoPivotWorld(*obj); // pivit = visible center
-
-	const float len = 2.5f;
-
-	// screen screen picking
-	XMVECTOR o = XMLoadFloat3(&p);
-	XMVECTOR x1 = o + XMVectorSet(len, 0, 0, 0);
-	XMVECTOR y1 = o + XMVectorSet(0, len, 0, 0);
-	XMVECTOR z1 = o + XMVectorSet(0, 0, len, 0);
-
-	Vec2 so = WorldToScreen(o, g_View, g_Proj);
-	Vec2 sx = WorldToScreen(x1, g_View, g_Proj);
-	Vec2 sy = WorldToScreen(y1, g_View, g_Proj);
-	Vec2 sz = WorldToScreen(z1, g_View, g_Proj);
-
-	Vec2 m{ (float)mouseX, (float)mouseY };
-
-	float dx = DisPointToSegment2D(m, so, sx);
-	float dy = DisPointToSegment2D(m, so, sy);
-	float dz = DisPointToSegment2D(m, so, sz);
-
-	const float kPickPx = 12.0f;
-	g_ActiveAxis = GizmoAxis::None;
-
-	float best = kPickPx;
-	if (dx < best)
-	{
-		best = dx;
-		g_ActiveAxis = GizmoAxis::X;
-		g_AxisDir = { 1, 0, 0 };
-	}
-	if (dy < best)
-	{
-		best = dy;
-		g_ActiveAxis = GizmoAxis::Y;
-		g_AxisDir = { 0, 1, 0 };
-	}
-	if (dz < best)
-	{
-		best = dz;
-		g_ActiveAxis = GizmoAxis::Z;
-		g_AxisDir = { 0, 0, 1 };
-	}
-
-	if (g_ActiveAxis == GizmoAxis::None) return false;
-
-	g_Dragging = true;
-
-	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
-	XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
-
-	g_StartS = CalculateAxisProject(mouseX, mouseY, gizmoPosV, axisDirV);
-
-	return true;
+	return BeginDrag(gizmoPivot, obj->transform.position, mouseX, mouseY);
 }
 
 // calculate movement
 void GizmoTranslate::OnMouseDrag(int mouseX, int mouseY)
 {
-	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate))
-	{
-		return;
-	}
-
-	if (!g_Dragging) return;
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate)) return;
 
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return;
 
-	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
-	//XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
-	XMVECTOR startPivotV = XMLoadFloat3(&g_StartGizmoPos);
-
-	float sNow = CalculateAxisProject(mouseX, mouseY, startPivotV, axisDirV);
-	float delta = sNow - g_StartS;
-
-	XMVECTOR newPivotV = startPivotV + axisDirV * delta;
-
-	XMFLOAT3 newPivot;
-	XMStoreFloat3(&newPivot, newPivotV);
-
-	g_DraggingPivot = newPivot;
-
-	obj->transform.position = {
-		newPivot.x + g_PivotToTransformOffset.x,
-		newPivot.y + g_PivotToTransformOffset.y,
-		newPivot.z + g_PivotToTransformOffset.z,
-	};
-
-	obj->aabbValid = false;
+	if (OnDrag(mouseX, mouseY, obj->transform.position))
+	{
+		obj->aabbValid = false;
+	}
 }
 
 // stop picking
@@ -226,6 +144,40 @@ bool GizmoTranslate::IsActive()
 	return g_Dragging;
 }
 
+bool GizmoTranslate::OnMouseDownExternal(DirectX::XMFLOAT3& inOutPos, int mouseX, int mouseY)
+{
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate)) return false;
+
+	g_pExternalPos = &inOutPos;
+	g_ExternalDirty = false;
+
+	return BeginDrag(inOutPos, inOutPos, mouseX, mouseY);
+}
+
+bool GizmoTranslate::OnMouseDragExternal(DirectX::XMFLOAT3& inOutPos, int mouseX, int mouseY)
+{
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate)) return false;
+
+	g_pExternalPos = &inOutPos;
+
+	if (OnDrag(mouseX, mouseY, inOutPos))
+	{
+		g_ExternalDirty = true;
+		return true;
+	}
+
+	return false;
+}
+
+void GizmoTranslate::DrawExternal(const DirectX::XMFLOAT3& pos)
+{
+	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate)) return;
+
+	XMFLOAT3 pivot = (g_Dragging) ? g_DraggingPivot : pos;
+
+	DrawGizmo(pivot);
+}
+
 static XMFLOAT4 AxisColor(GizmoAxis axis)
 {
 	switch (axis)
@@ -235,6 +187,15 @@ static XMFLOAT4 AxisColor(GizmoAxis axis)
 	case GizmoAxis::Z: return { 0.0f, 0.0f, 1.0f, 1.0f };
 	default:           return { 1.0f, 1.0f, 1.0f, 1.0f };
 	}
+}
+
+static void DrawGizmo(const XMFLOAT3& pivot)
+{
+	const float len = 2.5f;
+
+	Draw3d_MakeThickLine(pivot, { pivot.x + len, pivot.y,       pivot.z }, 0.1f, AxisColor(GizmoAxis::X));
+	Draw3d_MakeThickLine(pivot, { pivot.x,       pivot.y + len, pivot.z }, 0.1f, AxisColor(GizmoAxis::Y));
+	Draw3d_MakeThickLine(pivot, { pivot.x,       pivot.y,       pivot.z + len }, 0.1f, AxisColor(GizmoAxis::Z));
 }
 
 static Vec2 WorldToScreen(FXMVECTOR pWorld, CXMMATRIX view, CXMMATRIX proj)
@@ -310,6 +271,96 @@ XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir)
 	XMVECTOR n = XMVector3Cross(axisDir, vxa); // normal vector
 
 	return XMVector3Normalize(n);
+}
+
+static bool BeginDrag(const XMFLOAT3& gizmoPivotWorld, const XMFLOAT3& targetWorldPos, int mouseX, int mouseY)
+{
+	g_StartWorldPos = targetWorldPos;
+	g_StartGizmoPos = gizmoPivotWorld;
+	g_DraggingPivot = gizmoPivotWorld;
+
+	g_PivotToTransformOffset = {
+		g_StartWorldPos.x - gizmoPivotWorld.x,
+		g_StartWorldPos.y - gizmoPivotWorld.y,
+		g_StartWorldPos.z - gizmoPivotWorld.z
+	};
+
+	const float len = 2.5f;
+
+	// screen screen picking
+	XMVECTOR o = XMLoadFloat3(&gizmoPivotWorld);
+	XMVECTOR x1 = o + XMVectorSet(len, 0, 0, 0);
+	XMVECTOR y1 = o + XMVectorSet(0, len, 0, 0);
+	XMVECTOR z1 = o + XMVectorSet(0, 0, len, 0);
+
+	Vec2 so = WorldToScreen(o, g_View, g_Proj);
+	Vec2 sx = WorldToScreen(x1, g_View, g_Proj);
+	Vec2 sy = WorldToScreen(y1, g_View, g_Proj);
+	Vec2 sz = WorldToScreen(z1, g_View, g_Proj);
+
+	Vec2 m{ (float)mouseX, (float)mouseY };
+
+	float dx = DisPointToSegment2D(m, so, sx);
+	float dy = DisPointToSegment2D(m, so, sy);
+	float dz = DisPointToSegment2D(m, so, sz);
+
+	const float kPickPx = 12.0f;
+	g_ActiveAxis = GizmoAxis::None;
+
+	float best = kPickPx;
+	if (dx < best)
+	{
+		best = dx;
+		g_ActiveAxis = GizmoAxis::X;
+		g_AxisDir = { 1, 0, 0 };
+	}
+	if (dy < best)
+	{
+		best = dy;
+		g_ActiveAxis = GizmoAxis::Y;
+		g_AxisDir = { 0, 1, 0 };
+	}
+	if (dz < best)
+	{
+		best = dz;
+		g_ActiveAxis = GizmoAxis::Z;
+		g_AxisDir = { 0, 0, 1 };
+	}
+
+	if (g_ActiveAxis == GizmoAxis::None) return false;
+
+	g_Dragging = true;
+
+	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
+	XMVECTOR gizmoPosV = XMLoadFloat3(&g_StartGizmoPos);
+
+	g_StartS = CalculateAxisProject(mouseX, mouseY, gizmoPosV, axisDirV);
+	return true;
+}
+
+static bool OnDrag(int mouseX, int mouseY, XMFLOAT3& inOutTargetPos)
+{
+	if (!g_Dragging) return false;
+
+	XMVECTOR axisDirV = XMVector3Normalize(XMLoadFloat3(&g_AxisDir));
+	XMVECTOR startPivotV = XMLoadFloat3(&g_StartGizmoPos);
+
+	float sNow = CalculateAxisProject(mouseX, mouseY, startPivotV, axisDirV);
+	float delta = sNow - g_StartS;
+
+	XMVECTOR newPivotV = startPivotV + axisDirV * delta;
+
+	XMFLOAT3 newPivot;
+	XMStoreFloat3(&newPivot, newPivotV);
+	g_DraggingPivot = newPivot;
+
+	inOutTargetPos = {
+		newPivot.x + g_PivotToTransformOffset.x,
+		newPivot.y + g_PivotToTransformOffset.y,
+		newPivot.z + g_PivotToTransformOffset.z,
+	};
+
+	return true;
 }
 
 static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FXMVECTOR axisDir)
