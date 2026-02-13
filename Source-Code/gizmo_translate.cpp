@@ -18,6 +18,7 @@
 #include "camera_base.h"
 #include "collision.h"
 #include "editor_tool_draw_gate.h"
+#include "key_logger.h"
 
 using namespace DirectX;
 
@@ -110,6 +111,8 @@ bool GizmoTranslate::OnMouseDown(int mouseX, int mouseY)
 {
 	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate)) return false;
 
+	if (KeyLogger_IsPressed(KK_LEFTALT) || KeyLogger_IsPressed(KK_RIGHTALT)) return false;
+
 	MeshObject* obj = SceneManager::GetSelectedObject();
 	if (!obj) return false;
 
@@ -147,6 +150,8 @@ bool GizmoTranslate::IsActive()
 bool GizmoTranslate::OnMouseDownExternal(DirectX::XMFLOAT3& inOutPos, int mouseX, int mouseY)
 {
 	if (!EditorTool_Allow(EditorToolCategory::GizmoTranslate)) return false;
+
+	if (KeyLogger_IsPressed(KK_LEFTALT) || KeyLogger_IsPressed(KK_RIGHTALT)) return false;
 
 	g_pExternalPos = &inOutPos;
 	g_ExternalDirty = false;
