@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="animation.cpp" />
     <ClCompile Include="assimp_node_util.cpp" />
+    <ClCompile Include="attribute_editor.cpp" />
     <ClCompile Include="Audio.cpp" />
     <ClCompile Include="axis_util.cpp" />
     <ClCompile Include="camera_manager.cpp" />

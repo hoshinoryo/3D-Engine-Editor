@@ -129,11 +129,3 @@ void LineShader::SetWorldMatrix(const DirectX::XMMATRIX& mtxWorld)
 
 	m_pContext->UpdateSubresource(m_pVSConstantBufferWorld, 0, nullptr, &transpose, 0, 0);
 }
-
-/*
-void LineShader::SetViewProjBuffers(ID3D11Buffer* view, ID3D11Buffer* proj)
-{
-	m_pVSConstantBufferView = view;
-	m_pVSConstantBufferProj = proj;
-}
-*/

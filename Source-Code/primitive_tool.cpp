@@ -69,6 +69,16 @@ void PrimitiveTool::DeleteSelected()
 	g_Selected = std::min(g_Selected, (int)g_Cubes.size() - 1);
 }
 
+void PrimitiveTool::DuplicateSelected()
+{
+	if (!HasSelection()) return;
+
+	CubeObject copy = g_Cubes[g_Selected];
+	g_Cubes.push_back(copy);
+	g_Selected = (int)g_Cubes.size() - 1;
+	g_Cubes[g_Selected].UpdateAABB();
+}
+
 void PrimitiveTool::ClearSelection()
 {
 	g_Selected = -1;
@@ -159,6 +169,11 @@ void PrimitiveTool::MenuDraw()
 	if (ImGui::Button("Create Cube", ImVec2(-1, 0)))
 	{
 		CreateCube({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
+	}
+
+	if (ImGui::Button("Duplicate Cube", ImVec2(-1, 0)))
+	{
+		DuplicateSelected();
 	}
 
 	if (ImGui::Button("Delete Selected", ImVec2(-1, 0)))

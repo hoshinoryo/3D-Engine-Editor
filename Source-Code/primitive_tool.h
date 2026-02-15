@@ -23,6 +23,7 @@ namespace PrimitiveTool
 
 	void CreateCube(const DirectX::XMFLOAT3& pos, const DirectX::XMFLOAT3& scl = { 1, 1, 1 });
 	void DeleteSelected();
+	void DuplicateSelected();
 	void ClearSelection();
 
 	bool HasSelection();
