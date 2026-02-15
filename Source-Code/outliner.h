@@ -41,6 +41,7 @@ namespace Outliner
 
 	// Show Outliner
 	void ShowSceneOutliner();
+	void MenuDraw();
 
 	bool GetSelection(uint32_t& objectId);
 

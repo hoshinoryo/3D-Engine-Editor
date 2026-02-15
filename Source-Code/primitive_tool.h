@@ -27,6 +27,8 @@ namespace PrimitiveTool
 
 	bool HasSelection();
 	CubeObject* GetSelected();
+	int GetSelectedIndex();
+	int GetCount();
 
 	bool PickFromMouse(const CameraBase& cam, int mouseX, int mouseY);
 
@@ -35,7 +37,7 @@ namespace PrimitiveTool
 
 	void AppendColliders();
 
-	void ToolDraw();
+	void MenuDraw();
 }
 
 #endif // PRIMITIEV_TOOL_H

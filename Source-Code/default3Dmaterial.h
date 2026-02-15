@@ -62,7 +62,7 @@ public:
 	void Apply(Default3DShader& shader, const DirectX::XMFLOAT3& cameraPos) const;
 	
 	// Material management
-	void DebugDraw(Default3DShader& shader, const DirectX::XMFLOAT3& cameraPos);
+	void MenuDraw(Default3DShader& shader, const DirectX::XMFLOAT3& cameraPos);
 };
 
 extern Default3DMaterial g_DefaultSceneMaterial;

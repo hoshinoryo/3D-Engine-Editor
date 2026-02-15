@@ -16,9 +16,4 @@ void Game_Finalize();
 void Game_Update(double elapsed_time);
 void Game_Draw();
 
-void Game_DrawCameraDebugUI();
-void Game_DrawLightDebugUI();
-void Game_DrawMaterialManager();
-
-
 #endif // GAME_H

@@ -181,6 +181,39 @@ namespace Outliner
 		}
 	}
 
+	void MenuDraw()
+	{
+		ImGui::BeginChild(
+			"OutlinerScroll",
+			ImGui::GetContentRegionAvail(),
+			false,
+			ImGuiWindowFlags_AlwaysVerticalScrollbar
+		);
+
+		const auto& sceneAssets = SceneManager::AllModelAssets();
+
+		if (ImGui::Button("Show All"))
+		{
+			for (auto* asset : sceneAssets)
+			{
+				SceneManager::SetVisibleByAsset(asset, true);
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Hide All"))
+		{
+			for (auto* asset : sceneAssets)
+			{
+				SceneManager::SetVisibleByAsset(asset, false);
+			}
+		}
+		ImGui::Separator();
+
+		Outliner::ShowSceneOutliner();
+
+		ImGui::EndChild();
+	}
+
 	bool GetSelection(uint32_t& objectId)
 	{
 		objectId = g_selectedObjectId;

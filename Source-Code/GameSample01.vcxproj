@@ -206,6 +206,7 @@
     <ClInclude Include="aabb_provider.h" />
     <ClInclude Include="animation.h" />
     <ClInclude Include="assimp_node_util.h" />
+    <ClInclude Include="attribute_editor.h" />
     <ClInclude Include="Audio.h" />
     <ClInclude Include="axis_util.h" />
     <ClInclude Include="camera_base.h" />

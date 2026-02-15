@@ -66,7 +66,7 @@ void Default3DMaterial::Apply(Default3DShader& shader, const DirectX::XMFLOAT3& 
 	shader.UpdateSpecularParams(cameraPos, m_SpecularPower, specColor);
 }
 
-void Default3DMaterial::DebugDraw(Default3DShader& shader, const DirectX::XMFLOAT3& cameraPos)
+void Default3DMaterial::MenuDraw(Default3DShader& shader, const DirectX::XMFLOAT3& cameraPos)
 {
 	(void)shader;
 	(void)cameraPos;

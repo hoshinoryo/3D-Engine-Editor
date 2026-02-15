@@ -444,6 +444,9 @@
     <ClInclude Include="primitive_tool.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="attribute_editor.h">
+      <Filter>ヘッダー ファイル\editor</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shader_pixel_2d.hlsl">

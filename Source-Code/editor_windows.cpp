@@ -12,9 +12,17 @@
 #include "scene_manager.h"
 #include "outliner.h" 
 #include "default3Dmaterial.h"
+#include "default3Dshader.h"
 #include "primitive_tool.h"
+#include "camera_manager.h"
+#include "orbit_camera.h"
+#include "light.h"
+
+#include <DirectXMath.h>
 
 #include "imgui/imgui.h"
+
+using namespace DirectX;
 
 namespace // anonymous namespace
 {
@@ -73,7 +81,9 @@ namespace // anonymous namespace
 
 		void Draw(const EditorUI::Layout& l) override
 		{
-			ImGui::SetNextWindowPos(ImVec2(l.padding, l.padding), ImGuiCond_FirstUseEver);
+			const ImVec2 posOutliner(l.padding, l.padding);
+
+			ImGui::SetNextWindowPos(posOutliner, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSize(ImVec2(l.initWidthNarrow, l.maxHeight), ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSizeConstraints(
 				ImVec2(l.minWidth, ImGui::GetTextLineHeightWithSpacing() * 15.0f),
@@ -82,35 +92,8 @@ namespace // anonymous namespace
 
 			BeginWindowWithAutoFit(*this, Name());
 
-			ImGui::BeginChild(
-				"OutlinerScroll",
-				ImGui::GetContentRegionAvail(),
-				false,
-				ImGuiWindowFlags_AlwaysVerticalScrollbar
-			);
+			Outliner::MenuDraw();
 
-			const auto& sceneAssets = SceneManager::AllModelAssets();
-
-			if (ImGui::Button("Show All"))
-			{
-				for (auto* asset : sceneAssets)
-				{
-					SceneManager::SetVisibleByAsset(asset, true);
-				}
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Hide All"))
-			{
-				for (auto* asset : sceneAssets)
-				{
-					SceneManager::SetVisibleByAsset(asset, false);
-				}
-			}
-			ImGui::Separator();
-
-			Outliner::ShowSceneOutliner();
-
-			ImGui::EndChild();
 			ImGui::End();
 		}
 	};
@@ -124,11 +107,12 @@ namespace // anonymous namespace
 
 		void Draw(const EditorUI::Layout& l) override
 		{
-			const ImVec2 pos(l.displaySize.x - l.padding - l.initWidthNarrow,
+			const ImVec2 posInspector(
+				l.displaySize.x - l.padding - l.initWidthNarrow,
 				l.padding + l.initHeight + l.padding
 			);
 
-			ImGui::SetNextWindowPos(pos, ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowPos(posInspector, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSize(ImVec2(l.initWidthNarrow, l.initHeight), ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSizeConstraints(
 				ImVec2(l.minWidth, ImGui::GetFrameHeightWithSpacing() * 30.0f),
@@ -152,11 +136,14 @@ namespace // anonymous namespace
 			}
 			if (ImGui::CollapsingHeader("Debug Camera Control", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Game_DrawCameraDebugUI();
+				if (!CameraManager::IsPlayMode())
+				{
+					CameraManager::GetOrbitCamera().DebugDraw();
+				}
 			}
 			if (ImGui::CollapsingHeader("Debug Lighting Control", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Game_DrawLightDebugUI();
+				g_LightManager.DebugDraw();
 			}
 
 			ImGui::EndChild();
@@ -174,9 +161,9 @@ namespace // anonymous namespace
 
 		void Draw(const EditorUI::Layout& l) override
 		{
-			const ImVec2 posRight(l.displaySize.x - l.padding - l.initWidthNarrow, l.padding);
+			const ImVec2 posAttribute(l.displaySize.x - l.padding - l.initWidthNarrow, l.padding);
 
-			ImGui::SetNextWindowPos(posRight, ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowPos(posAttribute, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSize(ImVec2(l.initWidthNarrow, l.initHeight), ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSizeConstraints(
 				ImVec2(l.minWidth, ImGui::GetFrameHeightWithSpacing() * 30.0f),
@@ -193,108 +180,153 @@ namespace // anonymous namespace
 			);
 
 			MeshObject* obj = SceneManager::GetSelectedObject();
-			if (!obj)
+			CubeObject* prim = PrimitiveTool::GetSelected();
+			if (prim)
 			{
-				ImGui::TextDisabled("No object selected.");
-				//ImGui::TextDisabled(u8"(アウトライナーでオブジェクトを選択してください)");
+				ImGui::Text("Type: Primitive (Cube)");
+				ImGui::Text("Index: %d / Count: %d", PrimitiveTool::GetSelectedIndex(), PrimitiveTool::GetCount());
+				ImGui::Separator();
+
+				bool changed = false;
+
+				XMFLOAT3& pos = prim->GetPositionRef();
+
+				const float posStep = 0.05f;
+
+				ImGui::Text("Transform");
+				ImGui::Spacing();
+
+				// position
+				if (ImGui::DragFloat3("Position", &pos.x, posStep))
+					changed = true;
+
+				ImGui::Spacing();
+				ImGui::Separator();
+
+				if (ImGui::Button("Reset Position"))
+				{
+					pos = { 0, 0, 0 };
+					changed = true;
+				}
+
+				if (changed)
+				{
+					prim->UpdateAABB();
+				}
+
 				ImGui::EndChild();
 				ImGui::End();
+
 				return;
 			}
-
-			ImGui::Text("Name: %s", obj->name.empty() ? "(unnamed)" : obj->name.c_str());
-			ImGui::Text("ID: %u", obj->id);
-			ImGui::Separator();
-
-			ImGui::Checkbox("Visible", &obj->visible);
-			ImGui::SameLine();
-			ImGui::Checkbox("Pickable", &obj->pickable);
-
-			ImGui::Separator();
-
-			// Transform
-			ImGui::Text("Transform");
-			ImGui::Spacing();
-
-			TransformTRS& trs = obj->transform;
-
-			bool changed = false;
-
-			const float posStep = 0.05f;
-			const float rotStep = 0.2f;
-			const float sclStep = 0.01f;
-
-			// position
-			if (ImGui::DragFloat3("Position", &trs.position.x, posStep))
-				changed = true;
-
-			// rotation
-			if (ImGui::DragFloat3("Rotation", &trs.rotationQuat.x, rotStep))
-				changed = true;
-
-			static bool s_uniformScale = false;
-			ImGui::Checkbox("Uniform scale", &s_uniformScale);
-
-			if (!s_uniformScale)
+			else if (obj)
 			{
-				if (ImGui::DragFloat3("Scale", &trs.scale.x, sclStep))
+				ImGui::Text("Name: %s", obj->name.empty() ? "(unnamed)" : obj->name.c_str());
+				ImGui::Text("ID: %u", obj->id);
+				ImGui::Separator();
+
+				ImGui::Checkbox("Visible", &obj->visible);
+				ImGui::SameLine();
+				ImGui::Checkbox("Pickable", &obj->pickable);
+
+				ImGui::Separator();
+
+				// Transform
+				ImGui::Text("Transform");
+				ImGui::Spacing();
+
+				TransformTRS& trs = obj->transform;
+
+				bool changed = false;
+
+				const float posStep = 0.05f;
+				const float rotStep = 0.2f;
+				const float sclStep = 0.01f;
+
+				// position
+				if (ImGui::DragFloat3("Position", &trs.position.x, posStep))
 					changed = true;
+
+				// rotation
+				if (ImGui::DragFloat3("Rotation", &trs.rotationQuat.x, rotStep))
+					changed = true;
+
+				static bool s_uniformScale = false;
+				ImGui::Checkbox("Uniform scale", &s_uniformScale);
+
+				if (!s_uniformScale)
+				{
+					if (ImGui::DragFloat3("Scale", &trs.scale.x, sclStep))
+						changed = true;
+				}
+				else
+				{
+					float u = trs.scale.x;
+					if (ImGui::DragFloat("Scale", &u, sclStep))
+					{
+						trs.scale = { u, u, u };
+						changed = true;
+					}
+				}
+
+				ImGui::Spacing();
+				ImGui::Separator();
+
+				// reset buttons
+				if (ImGui::Button("Reset Position"))
+				{
+					trs.position = { 0, 0, 0 };
+					changed = true;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Reset Rotation"))
+				{
+					trs.rotationQuat = { 0, 0, 0, 1 };
+					changed = true;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Reset Scale"))
+				{
+					trs.scale = { 1, 1, 1 };
+					changed = true;
+				}
+
+				if (changed)
+				{
+					obj->aabbValid = false;
+				}
+
+				ImGui::EndChild();
+				ImGui::End();
+
+				return;
 			}
 			else
 			{
-				float u = trs.scale.x;
-				if (ImGui::DragFloat("Scale", &u, sclStep))
-				{
-					trs.scale = { u, u, u };
-					changed = true;
-				}
-			}
+				ImGui::TextDisabled("No object selected.");
+				ImGui::EndChild();
+				ImGui::End();
 
-			ImGui::Spacing();
-			ImGui::Separator();
-
-			// reset buttons
-			if (ImGui::Button("Reset Position"))
-			{
-				trs.position = { 0, 0, 0 };
-				changed = true;
+				return;
 			}
-			ImGui::SameLine();
-			if (ImGui::Button("Reset Rotation"))
-			{
-				trs.rotationQuat = { 0, 0, 0, 1 };
-				changed = true;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Reset Scale"))
-			{
-				trs.scale = { 1, 1, 1 };
-				changed = true;
-			}
-
-			if (changed)
-			{
-				obj->aabbValid = false;
-			}
-
-			ImGui::EndChild();
-			ImGui::End();
 		}
 	};
 
 	// Material window
-	struct MaterialManagerWindow final : public EditorUI::EditorWindow
+	class MaterialManagerWindow final : public EditorUI::EditorWindow
 	{
+	public:
+
 		const char* Name() const override { return "Material Manager"; }
 
 		void Draw(const EditorUI::Layout& l) override
 		{
-			const ImVec2 posRightDown(
+			const ImVec2 posMaterialManager(
 				l.displaySize.x - l.padding - l.initWidthWide,
 				l.displaySize.y - l.padding - l.initHeight
 			);
 
-			ImGui::SetNextWindowPos(posRightDown, ImGuiCond_FirstUseEver);
+			ImGui::SetNextWindowPos(posMaterialManager, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSize(ImVec2(l.initWidthWide, l.initHeight), ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSizeConstraints(
 				ImVec2(l.minWidth, ImGui::GetFrameHeightWithSpacing() * 10.0f),
@@ -310,7 +342,7 @@ namespace // anonymous namespace
 				ImGuiWindowFlags_AlwaysVerticalScrollbar
 			);
 
-			Game_DrawMaterialManager();
+			g_DefaultSceneMaterial.MenuDraw(g_Default3DshaderStatic, CameraManager::GetActiveCamera().GetPosition());
 
 			ImGui::EndChild();
 
@@ -326,16 +358,17 @@ namespace // anonymous namespace
 
 		void Draw(const EditorUI::Layout& l) override
 		{
-			ImGui::SetNextWindowPos(ImVec2(1000, 600), ImGuiCond_FirstUseEver);
+			const ImVec2 posPrimitiveTool(1000, 300);
+
+			ImGui::SetNextWindowPos(posPrimitiveTool, ImGuiCond_FirstUseEver);
 			ImGui::SetNextWindowSize(ImVec2(200, 200), ImGuiCond_FirstUseEver);
 
 			BeginWindowWithAutoFit(*this, Name());
 
-			PrimitiveTool::ToolDraw();
+			PrimitiveTool::MenuDraw();
 
 			ImGui::End();
 		}
-
 	};
 }
 
@@ -343,7 +376,6 @@ namespace EditorWindows
 {
 	void InitializeResources()
 	{
-		//Outliner::InitDefaultDrawers();
 		Outliner::InitIcons(
 			L"resources/mesh.png",
 			L"resources/skeleton.png",

@@ -85,6 +85,16 @@ CubeObject* PrimitiveTool::GetSelected()
 	return &g_Cubes[g_Selected];
 }
 
+int PrimitiveTool::GetSelectedIndex()
+{
+	return g_Selected;
+}
+
+int PrimitiveTool::GetCount()
+{
+	return (int)g_Cubes.size();
+}
+
 bool PrimitiveTool::PickFromMouse(const CameraBase& cam, int mouseX, int mouseY)
 {
 	XMVECTOR rayOrigin{};
@@ -144,7 +154,7 @@ void PrimitiveTool::AppendColliders()
 	}
 }
 
-void PrimitiveTool::ToolDraw()
+void PrimitiveTool::MenuDraw()
 {
 	if (ImGui::Button("Create Cube", ImVec2(-1, 0)))
 	{

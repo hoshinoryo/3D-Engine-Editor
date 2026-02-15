@@ -42,6 +42,34 @@
 
 using namespace DirectX;
 
+namespace
+{
+    // Initialize
+    static void InitLighting();
+    static void InitShaders(const XMFLOAT3& camPos);
+    static void InitSceneAssets();
+    static void InitPlayerAndEnv();
+    static void InitPasses();
+
+    // Finalize
+    static void ShutdownPasses();
+    static void ShutdownAssets();
+
+    // Update
+    static void UpdatePlayer(double elapsed_time, const XMFLOAT3& camFront);
+    static void UpdateCollisionWorld();
+    static void UpdateSkydomeFollow(const XMFLOAT3& camPos);
+
+    // Draw
+    static void DrawAllMeshObjects(const XMFLOAT3& camPos);
+    static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj);
+    static void RunOutlineAndGizmo();
+
+    // Input
+    static void HandleEditorMouseInput(const CameraBase& cam);
+
+    static void DrawRest(const XMFLOAT3& camPos);
+}
 
 // Picking pass
 static PickingPass g_PickingPass;
@@ -63,82 +91,21 @@ void Game_Initialize()
     CameraManager::Initialize(&g_Player);
     const XMFLOAT3& camPos = CameraManager::GetActiveCamera().GetPosition();
 
-    // Light initialization
-    g_LightManager.SetAmbient({ 0.5f, 0.5f, 0.5f, 1.0f });
-    XMVECTOR v{ 1.0f, -1.0f, 0.0f, 0.0f };
-    v = XMVector3Normalize(v);
-    XMFLOAT4 dir;
-    XMStoreFloat4(&dir, v);
-    g_LightManager.SetDirectionalWorld(dir, { 0.5f, 0.5f, 0.5f, 1.0f });
-
-    // Shaders
-    g_Default3DshaderStatic.UpdateSpecularParams(camPos, 30.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
-    g_Default3DshaderSkinned.UpdateSpecularParams(camPos, 30.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
- 
-    g_LightManager.SetPointLightCount(1);
-    g_LightManager.SetPointLight(0, { 0.0f, 3.0f, -2.0f }, 5.0f, { 1.0f, 0.0f, 0.0f });
-
-    // Model import
-    g_modelTest2 = ModelAsset_Load("resources/oldfurniture/OldFurniturePack_new.fbx", true, 0.03f);
-    g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 100.0f);
-
-    SceneManager::Clear();
-    CollisionSystem::ClearColliders();
-    //GuideOverlay::Initialize();
-
-    if (g_modelTest2)
-    {
-        //TransformTRS trs;
-        //trs.position = { 0.0f, 0.0f, 0.0f }; // test position
-        
-        for (uint32_t mi = 0; mi < (uint32_t)g_modelTest2->meshes.size(); ++mi)
-        {
-            TransformTRS trs;
-            uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
-        }
-    }
-
-    if (g_modelMaterial)
-    {
-        for (uint32_t mi = 0; mi < (uint32_t)g_modelMaterial->meshes.size(); ++mi)
-        {
-            TransformTRS trs;
-            trs.position = { -3.0f, 2.0f, -5.0f }; // test position
-            uint32_t id = SceneManager::RegisterMeshObject(g_modelMaterial, mi, trs, true);
-        }
-    }
-    
-    // Skeleton import
-    //Skeleton_Initialize();
-
-    Skydome_Initialize();
-
-    // Player
-    g_Player.Initialize({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f });
-
-    g_PickingReady = g_PickingPass.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
-    g_OutlineReady = g_OutlinePost.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
+    InitLighting();
+    InitShaders(camPos);
+    InitSceneAssets();
+    InitPlayerAndEnv();
+    InitPasses();
 }
 
 void Game_Finalize()
 {
-    if (g_PickingReady)
-    {
-        g_PickingPass.Finalize();
-        g_PickingReady = false;
-    }
-    if (g_OutlineReady)
-    {
-        g_OutlinePost.Finalize();
-        g_OutlineReady = false;
-    }
+    ShutdownPasses();
 
     g_Player.Finalize();
-
     Skydome_Finalize();
 
-    ModelAsset_Release(g_modelMaterial);
-    ModelAsset_Release(g_modelTest2);
+    ShutdownAssets();
     
     CameraManager::Finalize();
 }
@@ -148,50 +115,18 @@ void Game_Update(double elapsed_time)
     // ---- CAMERA UPDATE ----
     // DO NOT TOUCH: Update view and proj constant buffer
     CameraManager::Update(elapsed_time);
-    // -----------------------
 
     CameraBase& cam = CameraManager::GetActiveCamera();
     XMFLOAT3 camPos = cam.GetPosition();
     XMFLOAT3 camFront = cam.GetFront();
 
-    //g_Player.Update(elapsed_time);
-    if (CameraManager::IsPlayMode())
-    {
-        g_Player.Update(elapsed_time, camFront);
-    }
-    else
-    {
-        g_Player.UpdateAnimationOnly(elapsed_time);
-    }
-
-    // ---- COLLISIONS UPDATE ----
-    SceneManager::UpdateWorldAABBs();
-    Demo_UpdateWorldAABB();
-
-    CollisionSystem::ClearColliders();
-
-    // add world AABB into list
-    for (const auto& obj : SceneManager::AllObjects())
-    {
-        if (!obj.visible) continue;
-        if (!obj.aabbValid) continue;
-
-        CollisionSystem::AddCollidersAABB(obj.worldAABB);
-    }
-    Demo_AddColliders();
-    PrimitiveTool::AppendColliders();
-    // ---------------------------
-
-    Skydome_SetPosition(camPos);
+    UpdatePlayer(elapsed_time, camFront);
+    UpdateCollisionWorld();
+    UpdateSkydomeFollow(camPos);
 }
 
 void Game_Draw()
 {
-    static XMFLOAT3 pos2 = { 0.0f, 0.0f, 3.0f };
-    XMMATRIX world2 = XMMatrixTranslationFromVector(XMLoadFloat3(&pos2));
-    static XMFLOAT3 pos3 = { 0.0f, 2.0f, -2.0f };
-    XMMATRIX world3 = XMMatrixTranslationFromVector(XMLoadFloat3(&pos3));
-
     // Camera draw
     CameraBase& cam = CameraManager::GetActiveCamera();
     const XMFLOAT3& camPos = cam.GetPosition();
@@ -200,27 +135,202 @@ void Game_Draw()
 
     Render3D_BeginFrame(cam);
     GizmoTranslate::Begin(view, proj);
-
     
     // Picking pass
-    if (g_PickingReady)
+    RunPickingPass(view, proj);
+    HandleEditorMouseInput(cam);
+
+    DrawAllMeshObjects(camPos);
+    RunOutlineAndGizmo();
+    DrawRest(camPos);
+}
+
+namespace
+{
+    static void InitLighting()
     {
+        g_LightManager.SetAmbient({ 0.5f, 0.5f, 0.5f, 1.0f });
+        XMVECTOR v{ 1.0f, -1.0f, 0.0f, 0.0f };
+        v = XMVector3Normalize(v);
+        XMFLOAT4 dir;
+        XMStoreFloat4(&dir, v);
+        g_LightManager.SetDirectionalWorld(dir, { 0.5f, 0.5f, 0.5f, 1.0f });
+    }
+
+    static void InitShaders(const XMFLOAT3& camPos)
+    {
+        g_Default3DshaderStatic.UpdateSpecularParams(camPos, 30.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+        g_Default3DshaderSkinned.UpdateSpecularParams(camPos, 30.0f, { 1.0f, 1.0f, 1.0f, 1.0f });
+
+        g_LightManager.SetPointLightCount(1);
+        g_LightManager.SetPointLight(0, { 0.0f, 3.0f, -2.0f }, 5.0f, { 1.0f, 0.0f, 0.0f });
+    }
+
+    static void InitSceneAssets()
+    {
+        g_modelTest2 = ModelAsset_Load("resources/oldfurniture/OldFurniturePack_new.fbx", true, 0.03f);
+        g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 100.0f);
+
+    }
+    static void InitPlayerAndEnv()
+    {
+        SceneManager::Clear();
+        CollisionSystem::ClearColliders();
+        //GuideOverlay::Initialize();
+
+        if (g_modelTest2)
+        {
+            for (uint32_t mi = 0; mi < (uint32_t)g_modelTest2->meshes.size(); ++mi)
+            {
+                TransformTRS trs;
+                uint32_t id = SceneManager::RegisterMeshObject(g_modelTest2, mi, trs, true);
+            }
+        }
+
+        if (g_modelMaterial)
+        {
+            for (uint32_t mi = 0; mi < (uint32_t)g_modelMaterial->meshes.size(); ++mi)
+            {
+                TransformTRS trs;
+                trs.position = { -3.0f, 2.0f, -5.0f }; // test position
+                uint32_t id = SceneManager::RegisterMeshObject(g_modelMaterial, mi, trs, true);
+            }
+        }
+
+        // Skeleton import
+        //Skeleton_Initialize();
+
+        Skydome_Initialize();
+
+        // Player
+        g_Player.Initialize({ 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f });
+    }
+
+    static void InitPasses()
+    {
+        g_PickingReady = g_PickingPass.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
+        g_OutlineReady = g_OutlinePost.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
+    }
+
+    static void ShutdownPasses()
+    {
+        if (g_PickingReady)
+        {
+            g_PickingPass.Finalize();
+            g_PickingReady = false;
+        }
+        if (g_OutlineReady)
+        {
+            g_OutlinePost.Finalize();
+            g_OutlineReady = false;
+        }
+    }
+
+    static void ShutdownAssets()
+    {
+        ModelAsset_Release(g_modelMaterial);
+        ModelAsset_Release(g_modelTest2);
+    }
+
+    static void UpdatePlayer(double elapsed_time, const XMFLOAT3& camFront)
+    {
+        if (CameraManager::IsPlayMode())
+        {
+            g_Player.Update(elapsed_time, camFront);
+        }
+        else
+        {
+            g_Player.UpdateAnimationOnly(elapsed_time);
+        }
+    }
+
+    // ---- COLLISIONS UPDATE ----
+    static void UpdateCollisionWorld()
+    {
+        SceneManager::UpdateWorldAABBs();
+        Demo_UpdateWorldAABB();
+
+        CollisionSystem::ClearColliders();
+
+        // add world AABB into list
+        for (const auto& obj : SceneManager::AllObjects())
+        {
+            if (!obj.visible) continue;
+            if (!obj.aabbValid) continue;
+
+            CollisionSystem::AddCollidersAABB(obj.worldAABB);
+        }
+        Demo_AddColliders();
+        PrimitiveTool::AppendColliders();
+    }
+
+    static void UpdateSkydomeFollow(const XMFLOAT3& camPos)
+    {
+        Skydome_SetPosition(camPos);
+    }
+
+    static void DrawAllMeshObjects(const XMFLOAT3& camPos)
+    {
+        // Draw all mesh objects
+        for (auto& obj : SceneManager::AllObjects())
+        {
+            if (!obj.visible || !obj.asset) continue;
+
+            const XMMATRIX instanceWorld = obj.transform.ToMatrix();
+            const XMMATRIX nodeToModel = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+            const XMMATRIX world = nodeToModel * instanceWorld;
+
+            ModelRenderer_Draw(obj.asset, obj.meshIndex, world, camPos);
+
+            if (DebugDraw_Allow(DebugDrawCategory::Collision) && obj.aabbValid)
+            {
+                Collision_DebugDraw(obj.worldAABB, { 0.0f, 0.0f, 1.0f, 1.0f });
+            }
+        }
+    }
+
+    static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj)
+    {
+        if (!g_PickingReady) return;
+
         g_PickingPass.Begin(view, proj);
 
         for (const auto& obj : SceneManager::AllObjects())
         {
             if (!obj.visible || !obj.pickable || !obj.asset) continue;
 
-            XMMATRIX instanceWorld  = obj.transform.ToMatrix();
-            XMMATRIX nodeToModel    = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
-            XMMATRIX world          = nodeToModel * instanceWorld;
+            XMMATRIX instanceWorld = obj.transform.ToMatrix();
+            XMMATRIX nodeToModel = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+            XMMATRIX world = nodeToModel * instanceWorld;
 
             g_PickingPass.DrawAsset(obj.asset, obj.meshIndex, world, obj.id);
         }
 
         g_PickingPass.End();
+    }
 
-        // Read back
+    // Highlight and gizmo draw
+    static void RunOutlineAndGizmo()
+    {
+        if (!g_OutlineReady) return;
+        if (!g_PickingReady) return;
+
+        if (MeshObject* selMesh = SceneManager::GetSelectedObject())
+        {
+            const float color[4] = { 0, 0.8f, 0.3f, 1.0f };
+            g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), selMesh->id, 2, color);
+            GizmoTranslate::Draw(*selMesh);
+        }
+        else if (CubeObject* selPrim = PrimitiveTool::GetSelected())
+        {
+            GizmoTranslate::DrawExternal(selPrim->GetPosition());
+        }
+    }
+
+    static void HandleEditorMouseInput(const CameraBase& cam)
+    {
+        if (!g_PickingReady) return;
+
         Mouse_State ms;
         Mouse_GetState(&ms);
 
@@ -231,7 +341,7 @@ void Game_Draw()
         if (left && !prevLeft)
         {
             bool consumed = false;
-            
+
             if (CubeObject* selPrim = PrimitiveTool::GetSelected())
             {
                 consumed = GizmoTranslate::OnMouseDownExternal(selPrim->GetPositionRef(), ms.x, ms.y);
@@ -282,68 +392,20 @@ void Game_Draw()
         prevLeft = left;
     }
 
-    // Draw all mesh objects
-    for (auto& obj : SceneManager::AllObjects())
+    static void DrawRest(const XMFLOAT3& camPos)
     {
-        if (!obj.visible || !obj.asset) continue;
-        
-        const XMMATRIX instanceWorld = obj.transform.ToMatrix();
-        const XMMATRIX nodeToModel    = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
-        const XMMATRIX world          = nodeToModel * instanceWorld;
+        // Demo scene
+        Demo_Draw();
 
-        ModelRenderer_Draw(obj.asset, obj.meshIndex, world, camPos);
+        Skydome_Draw();
 
-        if (DebugDraw_Allow(DebugDrawCategory::Collision))
-        {
-            Collision_DebugDraw(obj.worldAABB, {0.0f, 0.0f, 1.0f, 1.0f});
-        }
+        // Light debug draw
+        g_LightManager.DebugDrawPointLight();
+        g_LightManager.DebugDrawDirectionalLight();
+
+        g_Player.Draw(camPos);
+
+        Draw3d_Draw();
     }
-
-    // Highlight and gizmo draw
-    if (g_OutlineReady)
-    {
-        if (MeshObject* selMesh = SceneManager::GetSelectedObject())
-        {
-            const float color[4] = { 0, 0.8f, 0.3f, 1.0f };
-            g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), selMesh->id, 2, color);
-            GizmoTranslate::Draw(*selMesh);
-        }
-        else if(CubeObject* selPrim = PrimitiveTool::GetSelected())
-        {
-            GizmoTranslate::DrawExternal(selPrim->GetPosition());
-        }
-    }
-
-    // Demo scene
-    Demo_Draw();
-
-    Skydome_Draw();
-
-    // Light debug draw
-    g_LightManager.DebugDrawPointLight();
-    g_LightManager.DebugDrawDirectionalLight();
-
-    g_Player.Draw(camPos);
-
-    Draw3d_Draw();
-}
-
-void Game_DrawCameraDebugUI()
-{
-    if (!CameraManager::IsPlayMode())
-    {
-        CameraManager::GetOrbitCamera().DebugDraw();
-    }
-}
-
-void Game_DrawLightDebugUI()
-{
-    g_LightManager.DebugDraw();
-}
-
-
-void Game_DrawMaterialManager()
-{
-    g_DefaultSceneMaterial.DebugDraw(g_Default3DshaderStatic, CameraManager::GetActiveCamera().GetPosition());
 }
 
