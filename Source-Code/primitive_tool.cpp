@@ -16,6 +16,7 @@
 #include "collision.h"
 #include "imgui/imgui.h"
 #include "debug_draw_gate.h"
+#include "picking_pass.h"
 
 using namespace DirectX;
 
@@ -24,9 +25,21 @@ static bool IntersectSlab(float o, float d, float minv, float maxv, float& tmin,
 
 namespace
 {
-	std::vector<CubeObject> g_Cubes;
+	struct PrimCube
+	{
+		CubeObject cube;
+		uint32_t id = 0;
+	};
+
+	std::vector<PrimCube> g_Cubes;
 	int g_Selected = -1;
 	float g_HalfExtent = 1.0f;
+
+	uint32_t g_NextPrimId = 1;
+	static uint32_t AllocPrimId()
+	{
+		return 0x80000000u | (g_NextPrimId++);
+	}
 }
 
 void PrimitiveTool::Initialize(float cubeHalfExtent)
@@ -34,6 +47,7 @@ void PrimitiveTool::Initialize(float cubeHalfExtent)
 	g_HalfExtent = cubeHalfExtent;
 	g_Cubes.clear();
 	g_Selected = -1;
+	g_NextPrimId = 1;
 }
 
 void PrimitiveTool::Finalize()
@@ -44,14 +58,13 @@ void PrimitiveTool::Finalize()
 
 void PrimitiveTool::CreateCube(const DirectX::XMFLOAT3& pos, const DirectX::XMFLOAT3& scl)
 {
-	CubeObject c(g_HalfExtent);
-	c.SetPosition(pos);
-	c.SetScale(scl);
+	PrimCube p{ CubeObject(g_HalfExtent), AllocPrimId() };
+	p.cube.SetPosition(pos);
+	p.cube.SetScale(scl);
+	p.cube.UpdateAABB();
 
-	g_Cubes.push_back(c);
+	g_Cubes.push_back(p);
 	g_Selected = (int)g_Cubes.size() - 1;
-
-	g_Cubes[g_Selected].UpdateAABB();
 }
 
 void PrimitiveTool::DeleteSelected()
@@ -73,10 +86,12 @@ void PrimitiveTool::DuplicateSelected()
 {
 	if (!HasSelection()) return;
 
-	CubeObject copy = g_Cubes[g_Selected];
+	PrimCube copy = g_Cubes[g_Selected];
+	copy.id = AllocPrimId();
+	copy.cube.UpdateAABB();
+
 	g_Cubes.push_back(copy);
 	g_Selected = (int)g_Cubes.size() - 1;
-	g_Cubes[g_Selected].UpdateAABB();
 }
 
 void PrimitiveTool::ClearSelection()
@@ -92,12 +107,18 @@ bool PrimitiveTool::HasSelection()
 CubeObject* PrimitiveTool::GetSelected()
 {
 	if (!HasSelection()) return nullptr;
-	return &g_Cubes[g_Selected];
+	return &g_Cubes[g_Selected].cube;
 }
 
 int PrimitiveTool::GetSelectedIndex()
 {
 	return g_Selected;
+}
+
+uint32_t PrimitiveTool::GetSelectedObjectId()
+{
+	if (!HasSelection()) return 0;
+	return g_Cubes[g_Selected].id;
 }
 
 int PrimitiveTool::GetCount()
@@ -117,7 +138,7 @@ bool PrimitiveTool::PickFromMouse(const CameraBase& cam, int mouseX, int mouseY)
 	for (int i = 0; i < (int)g_Cubes.size(); i++)
 	{
 		float t = 0.0f;
-		if (RayIntersectsAABB(rayOrigin, rayDir, g_Cubes[i].GetAABB(), t))
+		if (RayIntersectsAABB(rayOrigin, rayDir, g_Cubes[i].cube.GetAABB(), t))
 		{
 			if (t > 0.0f && t < bestT)
 			{
@@ -137,30 +158,30 @@ bool PrimitiveTool::PickFromMouse(const CameraBase& cam, int mouseX, int mouseY)
 
 void PrimitiveTool::Draw()
 {
-	for (auto& c : g_Cubes)
+	for (auto& p : g_Cubes)
 	{
-		c.Draw();
+		p.cube.Draw();
 
 		if (DebugDraw_Allow(DebugDrawCategory::Collision))
 		{
-			Collision_DebugDraw(c.GetAABB(), { 1.0f, 0.0f, 0.0f, 1.0f });
+			Collision_DebugDraw(p.cube.GetAABB(), { 1.0f, 0.0f, 0.0f, 1.0f });
 		}
 	}
 }
 
 void PrimitiveTool::UpdateAABB()
 {
-	for (auto& c : g_Cubes)
+	for (auto& p : g_Cubes)
 	{
-		c.UpdateAABB();
+		p.cube.UpdateAABB();
 	}
 }
 
 void PrimitiveTool::AppendColliders()
 {
-	for (const auto& c : g_Cubes)
+	for (const auto& p : g_Cubes)
 	{
-		CollisionSystem::AddCollidersAABB(c.GetAABB());
+		CollisionSystem::AddCollidersAABB(p.cube.GetAABB());
 	}
 }
 
@@ -184,6 +205,27 @@ void PrimitiveTool::MenuDraw()
 	ImGui::Separator();
 	ImGui::Text("Count: %d", (int)g_Cubes.size());
 	ImGui::Text("Selected: %d", g_Selected);
+}
+
+void PrimitiveTool::DrawPicking(PickingPass& pass)
+{
+	ID3D11Buffer* vb = Cube_GetVB();
+	ID3D11Buffer* ib = Cube_GetIB();
+	UINT indexCount  = Cube_GetIndexCount();
+	UINT stride      = Cube_GetVBStride();
+	UINT offset      = 0;
+
+	if (!vb || !ib || indexCount == 0) return;
+
+	for (const auto& p : g_Cubes)
+	{
+		const XMFLOAT3 pos = p.cube.GetPosition();
+		const XMFLOAT3 scl = p.cube.GetScale();
+		
+		XMMATRIX world = XMMatrixScaling(scl.x, scl.y, scl.z) * XMMatrixTranslation(pos.x, pos.y, pos.z);
+
+		pass.DrawIndexed(vb, stride, offset, ib, Cube_GetIBFormat(), 0, indexCount, world, p.id);
+	}
 }
 
 static bool RayIntersectsAABB(FXMVECTOR rayOrigin, FXMVECTOR rayDir, const AABB& aabb, float& outT)

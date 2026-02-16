@@ -1,5 +1,6 @@
 D:\GM11\GameSample05_3D\animation.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\animation.obj
 D:\GM11\GameSample05_3D\assimp_node_util.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\assimp_node_util.obj
+D:\GM11\GameSample05_3D\attribute_editor.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\attribute_editor.obj
 D:\GM11\GameSample05_3D\Audio.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\Audio.obj
 D:\GM11\GameSample05_3D\axis_util.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\axis_util.obj
 D:\GM11\GameSample05_3D\camera_manager.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\camera_manager.obj
@@ -47,12 +48,12 @@ D:\GM11\GameSample05_3D\picking_pass.cpp;D:\GM11\GameSample05_3D\GameSample01\x6
 D:\GM11\GameSample05_3D\picking_shader.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\picking_shader.obj
 D:\GM11\GameSample05_3D\player.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\player.obj
 D:\GM11\GameSample05_3D\player_camera.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\player_camera.obj
+D:\GM11\GameSample05_3D\primitive_tool.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\primitive_tool.obj
 D:\GM11\GameSample05_3D\ray_util.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\ray_util.obj
 D:\GM11\GameSample05_3D\render3d.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\render3d.obj
 D:\GM11\GameSample05_3D\sampler.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\sampler.obj
 D:\GM11\GameSample05_3D\scene.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\scene.obj
 D:\GM11\GameSample05_3D\scene_manager.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\scene_manager.obj
-D:\GM11\GameSample05_3D\shader_field.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\shader_field.obj
 D:\GM11\GameSample05_3D\skeleton.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\skeleton.obj
 D:\GM11\GameSample05_3D\skeleton_util.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\skeleton_util.obj
 D:\GM11\GameSample05_3D\skydome.cpp;D:\GM11\GameSample05_3D\GameSample01\x64\Release\skydome.obj

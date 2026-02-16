@@ -63,7 +63,9 @@ namespace
     // Draw
     static void DrawAllMeshObjects(const XMFLOAT3& camPos);
     static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj);
-    static void RunOutlineAndGizmo();
+    //static void RunOutlineAndGizmo();
+    static void RunOutline();
+    static void RunGizmo();
 
     // Input
     static void HandleEditorMouseInput(const CameraBase& cam);
@@ -141,8 +143,12 @@ void Game_Draw()
     HandleEditorMouseInput(cam);
 
     DrawAllMeshObjects(camPos);
-    RunOutlineAndGizmo();
     DrawRest(camPos);
+
+    //RunOutlineAndGizmo();
+    RunOutline();
+    RunGizmo();
+    Draw3d_Draw();
 }
 
 namespace
@@ -306,19 +312,33 @@ namespace
             g_PickingPass.DrawAsset(obj.asset, obj.meshIndex, world, obj.id);
         }
 
+        PrimitiveTool::DrawPicking(g_PickingPass);
+
         g_PickingPass.End();
     }
 
-    // Highlight and gizmo draw
-    static void RunOutlineAndGizmo()
+    static void RunOutline()
     {
         if (!g_OutlineReady) return;
         if (!g_PickingReady) return;
 
+        const float color[4] = { 0, 0.8f, 0.3f, 1.0f };
+
         if (MeshObject* selMesh = SceneManager::GetSelectedObject())
         {
-            const float color[4] = { 0, 0.8f, 0.3f, 1.0f };
             g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), selMesh->id, 2, color);
+        }
+        else if (CubeObject* selPrim = PrimitiveTool::GetSelected())
+        {
+            uint32_t primId = PrimitiveTool::GetSelectedObjectId();
+            g_OutlinePost.DrawModel(g_PickingPass.GetIdSRV(), primId, 2, color);
+        }
+    }
+
+    static void RunGizmo()
+    {
+        if (MeshObject* selMesh = SceneManager::GetSelectedObject())
+        {
             GizmoTranslate::Draw(*selMesh);
         }
         else if (CubeObject* selPrim = PrimitiveTool::GetSelected())
@@ -405,7 +425,7 @@ namespace
 
         g_Player.Draw(camPos);
 
-        Draw3d_Draw();
+        //Draw3d_Draw();
     }
 }
 

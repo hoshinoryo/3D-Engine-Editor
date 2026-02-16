@@ -21,7 +21,6 @@ namespace
 	bool g_assetsDirty = true;
 	uint32_t g_nextId = 1;
 	uint32_t g_selectedId = 0;
-	//MeshObject* g_selected = nullptr;
 
 	void MarkAssetsDirty()
 	{

@@ -117,8 +117,6 @@ void LineShader::Begin()
 	m_pContext->IASetInputLayout(m_pInputLayout);
 
 	m_pContext->VSSetConstantBuffers(0, 1, &m_pVSConstantBufferWorld);
-	//m_pContext->VSSetConstantBuffers(1, 1, &m_pVSConstantBufferView);
-	//m_pContext->VSSetConstantBuffers(2, 1, &m_pVSConstantBufferProj);
 }
 
 void LineShader::SetWorldMatrix(const DirectX::XMMATRIX& mtxWorld)

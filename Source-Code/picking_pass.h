@@ -33,6 +33,11 @@ public:
 
 	//void DrawAsset(ModelAsset* asset, const DirectX::XMMATRIX& world, uint32_t objectId);
 	void DrawAsset(ModelAsset* asset, uint32_t meshIndex, const DirectX::XMMATRIX& world, uint32_t objectId);
+	void DrawIndexed(
+		ID3D11Buffer* vb, UINT vbStride, UINT vbOffset,
+		ID3D11Buffer* ib, DXGI_FORMAT ibFormat, UINT ibOffset,
+		UINT indexCount, const DirectX::XMMATRIX& world, uint32_t objectId
+	);
 
 	uint32_t ReadBackId(int mouseX, int mouseY);
 

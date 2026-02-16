@@ -149,6 +149,31 @@ void Cube_DrawMesh(const XMMATRIX& mtxWorld)
 	g_pContext->DrawIndexed(NUM_INDEX, 0, 0);
 }
 
+ID3D11Buffer* Cube_GetVB()
+{
+	return g_pVertexBuffer;
+}
+
+ID3D11Buffer* Cube_GetIB()
+{
+	return g_pIndexBuffer;
+}
+
+UINT Cube_GetIndexCount()
+{
+	return NUM_INDEX;
+}
+
+UINT Cube_GetVBStride()
+{
+	return sizeof(VertexCube);
+}
+
+DXGI_FORMAT Cube_GetIBFormat()
+{
+	return DXGI_FORMAT_R16_UINT;
+}
+
 CubeObject::CubeObject(float halfExtent)
 	: m_HalfExtent(halfExtent)
 {

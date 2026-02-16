@@ -139,6 +139,22 @@ void PickingPass::DrawAsset(ModelAsset* asset, uint32_t meshIndex, const DirectX
     m_pContext->DrawIndexed(mesh.indexCount, 0, 0);
 }
 
+void PickingPass::DrawIndexed(
+    ID3D11Buffer* vb, UINT vbStride, UINT vbOffset,
+    ID3D11Buffer* ib, DXGI_FORMAT ibFormat, UINT ibOffset,
+    UINT indexCount, const XMMATRIX& world, uint32_t objectId
+)
+{
+    if (!EditorTool_Allow(EditorToolCategory::Picking)) return;
+    if (!vb || !ib || indexCount == 0) return;
+
+    m_PickingShader.SetParams(world, m_View, m_Proj, objectId);
+
+    m_pContext->IASetVertexBuffers(0, 1, &vb, &vbStride, &vbOffset);
+    m_pContext->IASetIndexBuffer(ib, ibFormat, ibOffset);
+    m_pContext->DrawIndexed(indexCount, 0, 0);
+}
+
 // From mouse coordinate to return object id
 uint32_t PickingPass::ReadBackId(int mouseX, int mouseY)
 {

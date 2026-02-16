@@ -15,6 +15,7 @@
 
 #include "cube.h"
 #include "camera_base.h"
+#include "picking_pass.h"
 
 namespace PrimitiveTool
 {
@@ -28,7 +29,8 @@ namespace PrimitiveTool
 
 	bool HasSelection();
 	CubeObject* GetSelected();
-	int GetSelectedIndex();
+	int GetSelectedIndex(); // -1 = none
+	uint32_t GetSelectedObjectId(); // 0 = none
 	int GetCount();
 
 	bool PickFromMouse(const CameraBase& cam, int mouseX, int mouseY);
@@ -39,6 +41,7 @@ namespace PrimitiveTool
 	void AppendColliders();
 
 	void MenuDraw();
+	void DrawPicking(PickingPass& pass);
 }
 
 #endif // PRIMITIEV_TOOL_H

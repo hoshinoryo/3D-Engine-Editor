@@ -26,6 +26,7 @@ public:
 	void SetScale(const DirectX::XMFLOAT3& scl);
 
 	const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }
+	const DirectX::XMFLOAT3& GetScale() const { return m_Scale; }
 	DirectX::XMFLOAT3& GetPositionRef() { return m_Position; }
 	const AABB& GetAABB() const override { return m_AABB; }
 
@@ -45,5 +46,11 @@ private:
 void Cube_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, float halfExtent = 1.0f);
 void Cube_Finalize(void);
 void Cube_DrawMesh(const DirectX::XMMATRIX& mtxWorld);
+
+ID3D11Buffer* Cube_GetVB();
+ID3D11Buffer* Cube_GetIB();
+UINT          Cube_GetIndexCount();
+UINT          Cube_GetVBStride();
+DXGI_FORMAT   Cube_GetIBFormat();
 
 #endif // CUBE_H

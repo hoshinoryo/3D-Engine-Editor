@@ -42,16 +42,13 @@ namespace
 
 	XMFLOAT3* g_pExternalPos = nullptr;
 	bool g_ExternalDirty = false;
-
-	ID3D11DepthStencilState* g_pGizmoDepthOff = nullptr; // gizmo always on top layer
 }
 
 static XMFLOAT4 AxisColor(GizmoAxis axis);
 static void DrawGizmo(const XMFLOAT3& pivot);
 
-static void EnsureGizmoDepthState();
-static void SetGizmoDepthOff(ID3D11Device* ctx, ID3D11DepthStencilState* outPrev, UINT& outPrevRef);
-static void RestoreDepthState(ID3D11Device* ctx, ID3D11DepthStencilState* prev, UINT prevRef);
+//static void SetGizmoDepthOff(ID3D11Device* ctx, ID3D11DepthStencilState* outPrev, UINT& outPrevRef);
+//static void RestoreDepthState(ID3D11Device* ctx, ID3D11DepthStencilState* prev, UINT prevRef);
 
 // ---------------
 //  Picking Block
@@ -72,7 +69,6 @@ static XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir);
 // ----------------------
 static bool BeginDrag(const XMFLOAT3& gizmoPivotWorld, const XMFLOAT3& targetWorldPos, int mouseX, int mouseY);
 static bool OnDrag(int mouseX, int mouseY, XMFLOAT3& inOutTargetPos);
-
 
 static float CalculateAxisProject(int mouseX, int mouseY, FXMVECTOR startPos, FXMVECTOR axisDir);
 static XMFLOAT3 GetTranslationFromMatrix(XMMATRIX m);
@@ -204,40 +200,9 @@ static void DrawGizmo(const XMFLOAT3& pivot)
 {
 	const float len = 2.5f;
 
-	Draw3d_MakeThickLine(pivot, { pivot.x + len, pivot.y,       pivot.z }, 0.1f, AxisColor(GizmoAxis::X));
-	Draw3d_MakeThickLine(pivot, { pivot.x,       pivot.y + len, pivot.z }, 0.1f, AxisColor(GizmoAxis::Y));
-	Draw3d_MakeThickLine(pivot, { pivot.x,       pivot.y,       pivot.z + len }, 0.1f, AxisColor(GizmoAxis::Z));
-}
-
-static void EnsureGizmoDepthState()
-{
-	if (g_pGizmoDepthOff) return;
-
-	ID3D11Device* dev = Direct3D_GetDevice();
-	if (!dev) return;
-
-	D3D11_DEPTH_STENCIL_DESC ds{};
-	ds.DepthEnable = FALSE;
-	ds.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	ds.DepthFunc = D3D11_COMPARISON_ALWAYS;
-	ds.StencilEnable = FALSE;
-
-	dev->CreateDepthStencilState(&ds, &g_pGizmoDepthOff);
-}
-
-void SetGizmoDepthOff(ID3D11Device* ctx, ID3D11DepthStencilState* outPrev, UINT& outPrevRef)
-{
-	outPrev = nullptr;
-	outPrevRef = 0;
-
-	EnsureGizmoDepthState();
-	if (!ctx || !g_pGizmoDepthOff) return;
-
-
-}
-
-void RestoreDepthState(ID3D11Device* ctx, ID3D11DepthStencilState* prev, UINT prevRef)
-{
+	Draw3d_MakeThickLineOverlay(pivot, { pivot.x + len, pivot.y,       pivot.z       }, 0.1f, AxisColor(GizmoAxis::X));
+	Draw3d_MakeThickLineOverlay(pivot, { pivot.x,       pivot.y + len, pivot.z       }, 0.1f, AxisColor(GizmoAxis::Y));
+	Draw3d_MakeThickLineOverlay(pivot, { pivot.x,       pivot.y,       pivot.z + len }, 0.1f, AxisColor(GizmoAxis::Z));
 }
 
 static Vec2 WorldToScreen(FXMVECTOR pWorld, CXMMATRIX view, CXMMATRIX proj)
