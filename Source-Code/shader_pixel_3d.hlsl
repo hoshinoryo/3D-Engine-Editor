@@ -44,6 +44,13 @@ cbuffer PS_CONSTANT_BUFFER : register(b4)
     float3 point_light_dummy;
 };
 
+cbuffer ShadowPS_CONSTANT_BUFFER : register(b5)
+{
+    float4x4 lightViewProj;
+    float shadowBias;
+    float3 shadowDummyPS;
+};
+
 struct PS_IN
 {
     float4 posH     : SV_POSITION; // システム定義の頂点位置（クリップ空間座標）
@@ -52,13 +59,46 @@ struct PS_IN
     float3 tangentW : TANGENT0;
     float4 color    : COLOR0;
     float2 uv       : TEXCOORD0;
+    
+    float4 posLightH : TEXCOORD1;
 };
 
 
 Texture2D diffTex   : register(t0);  // diffuse texture
 Texture2D normalTex : register(t1);
 Texture2D specTex   : register(t2);
-SamplerState samp;                   // テクスチャサンプラ
+Texture2D<float> shadowMap : register(t3);
+
+SamplerState samp : register(s0); // テクスチャサンプラ
+SamplerComparisonState shadowSamp : register(s1);
+
+
+float2 ShadowUV(float4 posLightH)
+{
+    float3 ndc = posLightH.xyz / posLightH.w;
+    return ndc.xy * float2( 0.5f, -0.5f ) + 0.5f;
+}
+
+float ShadowDepth(float4 posLightH)
+{
+    float3 ndc = posLightH / posLightH.w;
+    return ndc.z * 0.5f + 0.5f;
+}
+
+float CalcShadow(float4 posLightH)
+{
+    if (posLightH.w <= 0.0f)
+        return 1.0f;
+    
+    float2 uv = ShadowUV(posLightH);
+    float depth = ShadowDepth(posLightH);
+    
+    if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) return 1.0f;
+    
+    //return shadowMap.SampleCmpLevelZero(shadowSamp, uv, depth - shadowBias);
+    return shadowMap.Sample(samp, uv);
+
+}
 
 
 float4 main(PS_IN pi) : SV_TARGET
@@ -81,33 +121,25 @@ float4 main(PS_IN pi) : SV_TARGET
     
     float3 V = normalize(eye_posW - pi.posW.xyz);
     
+    // Shadow
+    //float shadow = CalcShadow(pi.posLightH);
+    float shadow = 1.0f;
+    
     // ---- Ambient Light ----
     float3 ambient = material_color * ambient_color.rgb;
     
     // ---- Directional Light ----
     float3 LightDir = normalize(-directional_world_vector.xyz); // from pixel to light
-    //float dl = (dot(-directional_world_vector, normalW) + 1.0f) * 0.5f;
     float dl = max(0.0f, dot(LightDir, normalW));
-    float3 diffuse = material_color * directional_color.rgb * dl;
+    float3 diffuse = material_color * directional_color.rgb * dl * shadow;
     
     // ---- Specular Light ----
-    //float3 toEye = normalize(eye_posW - pi.posW.xyz);
     float3 r = reflect(-LightDir, normalW);
     float t = pow(saturate(dot(r, V)), specular_power);
-    //float3 specular = specular_color * t;
-    float3 specular = specular_color.rgb * specSamp * t;
+    float3 specular = specular_color.rgb * specSamp * t * shadow;
 
     // final color
     float3 color = ambient + diffuse + specular;
-    
-    // リムライト
-    /*
-    float lim_intensity = 1.0f - max(dot(normalW.xyz, toEye), 0.0f);
-    lim_intensity = pow(lim_intensity, 3.2f);
-    float3 lim_color = { 0.5f, 0.5f, 0.5f };
-    
-    color += lim_color * lim_intensity;
-    */
 
     // ---- Point Light ----
     for (int i = 0; i < point_light_count; i++)

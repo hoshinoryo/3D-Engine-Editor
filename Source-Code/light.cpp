@@ -40,12 +40,6 @@ void LightManager::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pConte
 	buffer_desc.ByteWidth = sizeof(DirectionalLightData); // directional light buffer size
 	g_pDevice->CreateBuffer(&buffer_desc, nullptr, &g_pPSConstantBuffer2); // directional light
 
-	/*
-	// Specular(Slot 3)
-	buffer_desc.ByteWidth = sizeof(SpecularLightData); // specular light buffer size
-	g_pDevice->CreateBuffer(&buffer_desc, nullptr, &g_pPSConstantBuffer3); // specular light
-	*/
-
 	// Point Light List(Slot 4)
 	buffer_desc.ByteWidth = sizeof(PointLightList); // specular light buffer size
 	g_pDevice->CreateBuffer(&buffer_desc, nullptr, &g_pPSConstantBuffer4); // specular light
@@ -54,7 +48,6 @@ void LightManager::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pConte
 void LightManager::Finalize()
 {
 	SAFE_RELEASE(g_pPSConstantBuffer4);
-	//SAFE_RELEASE(g_pPSConstantBuffer3);
 	SAFE_RELEASE(g_pPSConstantBuffer2);
 	SAFE_RELEASE(g_pPSConstantBuffer1);
 }
@@ -69,15 +62,6 @@ void LightManager::SetDirectionalWorld(const XMFLOAT4& directional, const XMFLOA
 	m_DirectionalData.Directional = directional;
 	m_DirectionalData.Color = color;
 }
-
-/*
-void LightManager::SetSpecularWorld(const XMFLOAT3& cameraPos, float power, const XMFLOAT4& color)
-{
-	m_SpecularData.CameraPosition = cameraPos;
-	m_SpecularData.Power = power;
-	m_SpecularData.Color = color;
-}
-*/
 
 void LightManager::SetPointLightCount(int count)
 {
@@ -115,12 +99,6 @@ void LightManager::BindAllLightsToPipeline()
 	// Slot 2: Directional
 	g_pContext->UpdateSubresource(g_pPSConstantBuffer2, 0, nullptr, &m_DirectionalData, 0, 0);
 	g_pContext->PSSetConstantBuffers(2, 1, &g_pPSConstantBuffer2);
-
-	/*
-	// Slot 3: Specular
-	g_pContext->UpdateSubresource(g_pPSConstantBuffer3, 0, nullptr, &m_SpecularData, 0, 0);
-	g_pContext->PSSetConstantBuffers(3, 1, &g_pPSConstantBuffer3);
-	*/
 
 	// Slot 4: Point Lights List
 	g_pContext->UpdateSubresource(g_pPSConstantBuffer4, 0, nullptr, &m_PointLights, 0, 0);

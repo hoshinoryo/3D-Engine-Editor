@@ -37,6 +37,7 @@
 #include "debug_draw_gate.h"
 #include "gizmo_translate.h"
 #include "primitive_tool.h"
+//#include "shadow_pass.h"
 
 #include <DirectXMath.h>
 
@@ -62,8 +63,8 @@ namespace
 
     // Draw
     static void DrawAllMeshObjects(const XMFLOAT3& camPos);
+    static void RunShadowPass();
     static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj);
-    //static void RunOutlineAndGizmo();
     static void RunOutline();
     static void RunGizmo();
 
@@ -79,7 +80,14 @@ static bool g_PickingReady = false;
 // Outline pass
 static OutlinePostPass g_OutlinePost;
 static bool g_OutlineReady = false;
+/*
+// Shadow pass
+static ShadowPass g_ShadowPass;
+static bool g_ShadowReady = false;
+static XMFLOAT3 g_ShadowDir = { 0.0f, -1.0f, 0.0f };
+*/
 
+static ModelAsset* g_modelTest1 = nullptr;
 static ModelAsset* g_modelTest2 = nullptr;
 static ModelAsset* g_modelMaterial = nullptr;
 
@@ -129,8 +137,13 @@ void Game_Update(double elapsed_time)
 
 void Game_Draw()
 {
+    //RunShadowPass();
+    //g_ShadowPass.PrepareForMainPass(Direct3D_GetContext());
+
     // Camera draw
     CameraBase& cam = CameraManager::GetActiveCamera();
+    cam.Update(0);
+
     const XMFLOAT3& camPos = cam.GetPosition();
     XMMATRIX view = XMLoadFloat4x4(&cam.GetView());
     XMMATRIX proj = XMLoadFloat4x4(&cam.GetProj());
@@ -145,7 +158,6 @@ void Game_Draw()
     DrawAllMeshObjects(camPos);
     DrawRest(camPos);
 
-    //RunOutlineAndGizmo();
     RunOutline();
     RunGizmo();
     Draw3d_Draw();
@@ -156,10 +168,12 @@ namespace
     static void InitLighting()
     {
         g_LightManager.SetAmbient({ 0.5f, 0.5f, 0.5f, 1.0f });
-        XMVECTOR v{ 1.0f, -1.0f, 0.0f, 0.0f };
+        XMVECTOR v{ 1.0f, -1.0f, 1.0f, 0.0f };
         v = XMVector3Normalize(v);
         XMFLOAT4 dir;
         XMStoreFloat4(&dir, v);
+        //g_ShadowDir = { dir.x, dir.y, dir.z };
+
         g_LightManager.SetDirectionalWorld(dir, { 0.5f, 0.5f, 0.5f, 1.0f });
     }
 
@@ -174,15 +188,24 @@ namespace
 
     static void InitSceneAssets()
     {
+        g_modelTest1 = ModelAsset_Load("resources/chain-link-fence/ChainLinkFence.fbx", true, 0.03f);
         g_modelTest2 = ModelAsset_Load("resources/oldfurniture/OldFurniturePack_new.fbx", true, 0.03f);
         g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 100.0f);
-
     }
     static void InitPlayerAndEnv()
     {
         SceneManager::Clear();
         CollisionSystem::ClearColliders();
-        //GuideOverlay::Initialize();
+
+        if (g_modelTest1)
+        {
+            for (uint32_t mi = 0; mi < (uint32_t)g_modelTest1->meshes.size(); ++mi)
+            {
+                TransformTRS trs;
+                trs.position = { -5.0f, 0.0f, 0.0f }; // test position
+                uint32_t id = SceneManager::RegisterMeshObject(g_modelTest1, mi, trs, true);
+            }
+        }
 
         if (g_modelTest2)
         {
@@ -216,6 +239,13 @@ namespace
     {
         g_PickingReady = g_PickingPass.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
         g_OutlineReady = g_OutlinePost.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
+        /*
+        g_ShadowReady = g_ShadowPass.Initialize(Direct3D_GetDevice(), 2048, 3);
+        if (g_ShadowReady)
+        {
+            g_ShadowReady = g_ShadowPass.GetLightCamera().Initialize(Direct3D_GetDevice());
+        }
+        */
     }
 
     static void ShutdownPasses()
@@ -230,6 +260,14 @@ namespace
             g_OutlinePost.Finalize();
             g_OutlineReady = false;
         }
+        /*
+        if (g_ShadowReady)
+        {
+            g_ShadowPass.GetLightCamera().Finalize();
+            g_ShadowPass.Finalize();
+            g_ShadowReady = false;
+        }
+        */
     }
 
     static void ShutdownAssets()
@@ -294,6 +332,47 @@ namespace
             }
         }
     }
+
+    /*
+    static void RunShadowPass()
+    {
+        if (!g_ShadowReady) return;
+        ID3D11DeviceContext* ctx = Direct3D_GetContext();
+        if (!ctx) return;
+
+        // update light camera matrix
+        XMFLOAT3 target = { 0.0f, 0.0f, 0.0f };
+
+        float distance = 25.0f;
+        float orthoW = 40.0f;
+        float orthoH = 40.0f;
+        float nearZ = 0.1f;
+        float farZ = 80.0f;
+
+        auto& lightCam = g_ShadowPass.GetLightCamera();
+        lightCam.UpdateDirectional(g_ShadowDir, target, distance, orthoW, orthoH, nearZ, farZ);
+        lightCam.Upload();
+
+        g_ShadowPass.Begin(ctx);
+
+        // bind light to vs slot 1 and 2
+        lightCam.BindToVS(ctx, 1, 2);
+
+        // draw depth image
+        for (auto& obj : SceneManager::AllObjects())
+        {
+            if (!obj.visible || !obj.asset) continue;
+
+            XMMATRIX instanceWorld = obj.transform.ToMatrix();
+            XMMATRIX nodeToModel = XMLoadFloat4x4(&obj.asset->meshes[obj.meshIndex].nodeToModel);
+            XMMATRIX world = nodeToModel * instanceWorld;
+
+            ModelRenderer_DrawDepth(obj.asset, obj.meshIndex, world);
+        }
+
+        g_ShadowPass.End(ctx);
+    }
+    */
 
     static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj)
     {
@@ -424,8 +503,6 @@ namespace
         g_LightManager.DebugDrawDirectionalLight();
 
         g_Player.Draw(camPos);
-
-        //Draw3d_Draw();
     }
 }
 

@@ -19,6 +19,7 @@
 using namespace DirectX;
 
 extern Default3DMaterial g_DefaultSceneMaterial;
+//extern ShadowPass g_ShadowPass;
 
 static Texture g_TextureWhite;
 static Texture g_NormalFlat;
@@ -26,8 +27,6 @@ static bool g_TexReady = false;
 
 static void BindPS_SRV(UINT slot, ID3D11ShaderResourceView* srv);
 static ID3D11ShaderResourceView* FindSRV(ModelAsset* asset, const std::string& key);
-
-//static AABB TransformAABB(const AABB& local, const XMMATRIX& world);
 
 
 void ModelRenderer_Initialize()
@@ -62,16 +61,14 @@ void ModelRenderer_Draw(
 	if (!asset) return;
 	if (meshIndex >= asset->meshes.size()) return;
 
+	ID3D11DeviceContext* ctx = Direct3D_GetContext();
 	MeshAsset& mesh = asset->meshes[meshIndex];
 
 	Default3DShader& shader = mesh.skinned ? g_Default3DshaderSkinned : g_Default3DshaderStatic;
 	shader.Begin();
-
-	//const XMMATRIX finalWorld = asset->importFix * world; // import fix
-	//XMMATRIX instanceWorld = world;
 	shader.SetWorldMatrix(world);
 
-	Direct3D_GetContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Choose the material for this mesh
 	Default3DMaterial* mat = &g_DefaultSceneMaterial;
@@ -106,10 +103,13 @@ void ModelRenderer_Draw(
 	// Binding VB and IB
 	UINT stride = sizeof(Vertex3d);
 	UINT offset = 0;
-	Direct3D_GetContext()->IASetVertexBuffers(0, 1, &mesh.vertexBuffer, &stride, &offset);
-	Direct3D_GetContext()->IASetIndexBuffer(mesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	Direct3D_GetContext()->DrawIndexed(mesh.indexCount, 0, 0);
+	ctx->IASetVertexBuffers(0, 1, &mesh.vertexBuffer, &stride, &offset);
+	ctx->IASetIndexBuffer(mesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	//g_ShadowPass.BindShadowMapSRV(ctx);
+
+	ctx->DrawIndexed(mesh.indexCount, 0, 0);
 }
 
 void ModelRenderer_UnlitDraw(
@@ -128,10 +128,6 @@ void ModelRenderer_UnlitDraw(
 	if (mesh.skinned) return;
 
 	g_DefaultUnlitShader.Begin();
-
-	//const XMMATRIX finalWorld = asset->importFix * world; // import fix
-	//XMMATRIX instanceWorld = world;
-
 	g_DefaultUnlitShader.SetWorldMatrix(world);
 	g_DefaultUnlitShader.SetColor(color);
 
@@ -154,13 +150,43 @@ void ModelRenderer_UnlitDraw(
 
 	BindPS_SRV(0, diffuseSRV);
 
+	ID3D11DeviceContext* ctx = Direct3D_GetContext();
+
 	// Binding VB and IB
 	UINT stride = sizeof(Vertex3d);
 	UINT offset = 0;
-	Direct3D_GetContext()->IASetVertexBuffers(0, 1, &mesh.vertexBuffer, &stride, &offset);
-	Direct3D_GetContext()->IASetIndexBuffer(mesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	Direct3D_GetContext()->DrawIndexed(mesh.indexCount, 0, 0);
+	ctx->IASetVertexBuffers(0, 1, &mesh.vertexBuffer, &stride, &offset);
+	ctx->IASetIndexBuffer(mesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	ctx->DrawIndexed(mesh.indexCount, 0, 0);
+}
+
+void ModelRenderer_DrawDepth(ModelAsset* asset, uint32_t meshIndex, const DirectX::XMMATRIX& world)
+{
+	ModelRenderer_Initialize();
+
+	if (!asset) return;
+	if (meshIndex >= asset->meshes.size()) return;
+
+	MeshAsset& mesh = asset->meshes[meshIndex];
+	
+	Default3DShader& shader = mesh.skinned ? g_Default3DshaderSkinned : g_Default3DshaderStatic;
+	shader.BeginDepthOnly();
+	shader.SetWorldMatrix(world);
+
+	ID3D11DeviceContext* ctx = Direct3D_GetContext();
+	
+	ctx->PSSetShader(nullptr, nullptr, 0); // PS‚É–³Œø‰»
+	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	UINT stride = sizeof(Vertex3d);
+	UINT offset = 0;
+
+	ctx->IASetVertexBuffers(0, 1, &mesh.vertexBuffer, &stride, &offset);
+	ctx->IASetIndexBuffer(mesh.indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	ctx->DrawIndexed(mesh.indexCount, 0, 0);
 }
 
 static void BindPS_SRV(UINT slot, ID3D11ShaderResourceView* srv)

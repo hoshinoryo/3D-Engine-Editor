@@ -268,16 +268,6 @@ void OrbitCamera::Update(double elasped_time)
 	ctx->VSSetConstantBuffers(2, 1, &m_pVSConstantBufferProj);
 }
 
-/*
-const XMFLOAT3& OrbitCamera::GetFront() const
-{
-	XMVECTOR front = XMVector3Normalize(XMLoadFloat3(&m_CameraTarget) - XMLoadFloat3(&m_CameraPosition));
-	XMFLOAT3 out{};
-	XMStoreFloat3(&out, front);
-	return out;
-}
-*/
-
 float OrbitCamera::GetFov()
 {
 	return m_CameraFov;
@@ -287,9 +277,6 @@ float OrbitCamera::GetFov()
 // Only for drawing itself
 void OrbitCamera::DebugDraw()
 {
-	//ImGui::AlignTextToFramePadding();
-	//ImGui::Text("--- Orbit Camera Debug ---");
-
 	ImGui::Text("Position: %.2f, %.2f, %.2f", m_CameraPosition.x, m_CameraPosition.y, m_CameraPosition.z);
 
 	ImGui::DragFloat3("Target", (float*)&m_CameraTarget, 0.1f);

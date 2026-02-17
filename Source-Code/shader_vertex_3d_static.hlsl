@@ -26,6 +26,13 @@ cbuffer VS_CONSTANT_BUFFER : register(b2)
     float4x4 proj;
 };
 
+cbuffer Shadow_CONSTANT_BUFFER : register(b5)
+{
+    float4x4 lightViewProj;
+    float shadowBias;
+    float3 shadowDummy;
+};
+
 struct VS_IN
 {
     float4 posL : POSITION0; // local position
@@ -44,6 +51,8 @@ struct VS_OUT
     float3 tangentW : TANGENT0;
     float4 color : COLOR0;
     float2 uv : TEXCOORD0;
+    
+    float4 posLightH : TEXCOORD1;
 };
 
 
@@ -65,6 +74,7 @@ VS_OUT main(VS_IN vi)
     float4 mtxW = mul(localPos, world);
     float4 mtxWV = mul(mtxW, view);
     vo.posH = mul(mtxWV, proj);
+    vo.posLightH = mul(mtxW, lightViewProj);
     
     // 法線・tangentをワールド空間へ
     float3 normalW = mul(float4(localNormal, 0.0f), world).xyz;

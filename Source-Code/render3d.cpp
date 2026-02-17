@@ -9,8 +9,6 @@
 ==============================================================================*/
 
 #include "render3d.h"
-//#include "orbit_camera.h"
-//#include "player_camera.h"
 #include "camera_base.h"
 #include "light.h"
 

@@ -29,5 +29,10 @@ void ModelRenderer_UnlitDraw(
 	const DirectX::XMMATRIX& world,
 	const DirectX::XMFLOAT4& color
 );
+void ModelRenderer_DrawDepth(
+	ModelAsset* asset,
+	uint32_t meshIndex,
+	const DirectX::XMMATRIX& world
+);
 
 # endif // MODEL_RENDERER_H
