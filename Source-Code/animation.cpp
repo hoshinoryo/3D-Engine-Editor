@@ -13,7 +13,6 @@
 #include "assimp/postprocess.h"
 
 #include "animation.h"
-//#include "model.h"
 #include "model_asset.h"
 #include "skeleton_util.h"
 #include "axis_util.h"

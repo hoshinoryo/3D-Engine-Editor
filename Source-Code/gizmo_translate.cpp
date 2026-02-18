@@ -280,6 +280,7 @@ XMVECTOR MakeDragPlaneNormal(FXMVECTOR axisDir, FXMVECTOR viewDir)
 	return XMVector3Normalize(n);
 }
 
+// 2D Screen-Space Line Picking
 static bool BeginDrag(const XMFLOAT3& gizmoPivotWorld, const XMFLOAT3& targetWorldPos, int mouseX, int mouseY)
 {
 	g_StartWorldPos = targetWorldPos;

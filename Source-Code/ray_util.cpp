@@ -13,6 +13,7 @@
 
 using namespace DirectX;
 
+// Turn screen point into camera ray
 void BuildRayFromScreen(
 	const CameraBase& cam,
 	int mouseX,

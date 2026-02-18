@@ -63,7 +63,7 @@ namespace
 
     // Draw
     static void DrawAllMeshObjects(const XMFLOAT3& camPos);
-    static void RunShadowPass();
+    //static void RunShadowPass();
     static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj);
     static void RunOutline();
     static void RunGizmo();
