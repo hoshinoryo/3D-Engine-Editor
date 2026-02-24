@@ -12,8 +12,11 @@
 
 #include "shadow_pass.h"
 #include "direct3d.h"
+#include "sampler.h"
 
 using namespace DirectX;
+
+ShadowPass g_ShadowPass;
 
 bool ShadowPass::Initialize(ID3D11Device* device, int shadowMapSize, UINT shadowSRVSlot)
 {
@@ -101,8 +104,9 @@ void ShadowPass::PrepareForMainPass(ID3D11DeviceContext* ctx)
 
     ShadowConstantBuffer data;
     XMStoreFloat4x4(&data.lightViewProj, XMMatrixTranspose(LVP));
-    data.shadowBias = 0.001f;
-    data.padding = { 0, 0, 0 };
+    data.shadowBias      = 0.0025f;
+    data.shadowStrength  = 0.7f;
+    data.shadowTexelSize = { 1.0f / m_Size, 1.0f / m_Size };
 
     ctx->UpdateSubresource(m_pShadowCB, 0, nullptr, &data, 0, 0);
 
@@ -111,6 +115,13 @@ void ShadowPass::PrepareForMainPass(ID3D11DeviceContext* ctx)
     ctx->PSSetConstantBuffers(5, 1, &m_pShadowCB);
 
     this->BindShadowMapSRV(ctx);
+
+    Sampler_SetShadowCompare();
+}
+
+void ShadowPass::CleanUpAfterMainPass(ID3D11DeviceContext* ctx)
+{
+    Sampler_RestoreShadowSlot(); // restore sampler
 }
 
 bool ShadowPass::CreateShadowMapResources(ID3D11Device* device)

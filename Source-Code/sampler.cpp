@@ -18,6 +18,9 @@ static ID3D11SamplerState* g_pSamplerPoint = nullptr;
 static ID3D11SamplerState* g_pSamplerLinear = nullptr;
 static ID3D11SamplerState* g_pSamplerAnisotropic = nullptr;
 
+static ID3D11SamplerState* g_pSamplerShadow = nullptr;
+
+
 void Sampler_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 {
 	g_pDevice = pDevice;
@@ -50,10 +53,27 @@ void Sampler_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 
 	sampler_desc.Filter = D3D11_FILTER_ANISOTROPIC;
 	g_pDevice->CreateSamplerState(&sampler_desc, &g_pSamplerAnisotropic);
+
+	// Shadow map sampler describution
+	D3D11_SAMPLER_DESC shadow_desc{};
+	shadow_desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	shadow_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP; // out of border pass
+	shadow_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	shadow_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	shadow_desc.BorderColor[0] = 1.0f; // out of border equals out of shadow
+	shadow_desc.BorderColor[1] = 1.0f;
+	shadow_desc.BorderColor[2] = 1.0f;
+	shadow_desc.BorderColor[3] = 1.0f;
+	shadow_desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+	shadow_desc.MinLOD = 0;
+	shadow_desc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	g_pDevice->CreateSamplerState(&shadow_desc, &g_pSamplerShadow);
 }
 
 void Sampler_Finalize()
 {
+	SAFE_RELEASE(g_pSamplerShadow);
 	SAFE_RELEASE(g_pSamplerAnisotropic);
 	SAFE_RELEASE(g_pSamplerLinear);
 	SAFE_RELEASE(g_pSamplerPoint);
@@ -72,4 +92,16 @@ void Sampler_SetFilterLinear()
 void Sampler_SetFilterAnisotropic()
 {
 	g_pContext->PSSetSamplers(0, 1, &g_pSamplerAnisotropic);
+}
+
+void Sampler_SetShadowCompare()
+{
+	// Pixel shader: shadowSamp is slot7
+	g_pContext->PSSetSamplers(7, 1, &g_pSamplerShadow);
+}
+
+void Sampler_RestoreShadowSlot()
+{
+	ID3D11SamplerState* nullSampler = nullptr;
+	g_pContext->PSSetSamplers(7, 1, &nullSampler);
 }

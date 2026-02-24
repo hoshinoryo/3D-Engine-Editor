@@ -19,4 +19,7 @@ void Sampler_SetFilterPoint();
 void Sampler_SetFilterLinear();
 void Sampler_SetFilterAnisotropic();
 
+void Sampler_SetShadowCompare();
+void Sampler_RestoreShadowSlot();
+
 #endif // SAMPLER_H

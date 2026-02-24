@@ -20,14 +20,15 @@ struct ShadowConstantBuffer
 {
 	DirectX::XMFLOAT4X4 lightViewProj;
 	float shadowBias;
-	DirectX::XMFLOAT3 padding;
+	float shadowStrength;
+	DirectX::XMFLOAT2 shadowTexelSize;
 };
 
 class ShadowPass
 {
 public:
 
-	bool Initialize(ID3D11Device* device, int shadowMapSize = 2048, UINT shadowSRVSlot = 3);
+	bool Initialize(ID3D11Device* device, int shadowMapSize = 1024, UINT shadowSRVSlot = 7);
 	void Finalize();
 
 	void Begin(ID3D11DeviceContext* ctx);
@@ -38,6 +39,7 @@ public:
 
 	void BindShadowMapSRV(ID3D11DeviceContext* ctx) const;
 	void PrepareForMainPass(ID3D11DeviceContext* ctx);
+	void CleanUpAfterMainPass(ID3D11DeviceContext* ctx);
 
 	int GetShadowMapSize() const { return m_Size; }
 	UINT GetShadowSRVSlot() const { return m_ShadowSRVSlot; }
@@ -97,8 +99,8 @@ private:
 
 private:
 
-	int m_Size = 2048;
-	UINT m_ShadowSRVSlot = 3;
+	int m_Size = 1024;
+	UINT m_ShadowSRVSlot = 7;
 
 	DirectX::XMFLOAT4X4 m_LightViewProj{};
 
@@ -115,5 +117,7 @@ private:
 
 	LightCamera m_LightCam;
 };
+
+extern ShadowPass g_ShadowPass;
 
 #endif // SHADOW_PASS

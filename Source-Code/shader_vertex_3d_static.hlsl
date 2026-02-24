@@ -26,12 +26,14 @@ cbuffer VS_CONSTANT_BUFFER : register(b2)
     float4x4 proj;
 };
 
-cbuffer Shadow_CONSTANT_BUFFER : register(b5)
+cbuffer ShadowPS_CONSTANT_BUFFER : register(b5)
 {
     float4x4 lightViewProj;
     float shadowBias;
-    float3 shadowDummy;
+    float shadowStrength;
+    float2 shadowTexelSize;
 };
+
 
 struct VS_IN
 {

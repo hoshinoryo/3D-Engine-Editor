@@ -37,7 +37,7 @@
 #include "debug_draw_gate.h"
 #include "gizmo_translate.h"
 #include "primitive_tool.h"
-//#include "shadow_pass.h"
+#include "shadow_pass.h"
 
 #include <DirectXMath.h>
 
@@ -63,7 +63,7 @@ namespace
 
     // Draw
     static void DrawAllMeshObjects(const XMFLOAT3& camPos);
-    //static void RunShadowPass();
+    static void RunShadowPass();
     static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj);
     static void RunOutline();
     static void RunGizmo();
@@ -80,12 +80,11 @@ static bool g_PickingReady = false;
 // Outline pass
 static OutlinePostPass g_OutlinePost;
 static bool g_OutlineReady = false;
-/*
+
 // Shadow pass
-static ShadowPass g_ShadowPass;
+//ShadowPass g_ShadowPass;
 static bool g_ShadowReady = false;
 static XMFLOAT3 g_ShadowDir = { 0.0f, -1.0f, 0.0f };
-*/
 
 static ModelAsset* g_modelTest1 = nullptr;
 static ModelAsset* g_modelTest2 = nullptr;
@@ -137,8 +136,7 @@ void Game_Update(double elapsed_time)
 
 void Game_Draw()
 {
-    //RunShadowPass();
-    //g_ShadowPass.PrepareForMainPass(Direct3D_GetContext());
+    RunShadowPass();
 
     // Camera draw
     CameraBase& cam = CameraManager::GetActiveCamera();
@@ -155,12 +153,21 @@ void Game_Draw()
     RunPickingPass(view, proj);
     HandleEditorMouseInput(cam);
 
+    if (g_ShadowReady)
+    {
+        g_ShadowPass.PrepareForMainPass(Direct3D_GetContext());
+    }
     DrawAllMeshObjects(camPos);
     DrawRest(camPos);
 
     RunOutline();
     RunGizmo();
     Draw3d_Draw();
+
+    if (g_ShadowReady)
+    {
+        g_ShadowPass.CleanUpAfterMainPass(Direct3D_GetContext());
+    }
 }
 
 namespace
@@ -172,7 +179,7 @@ namespace
         v = XMVector3Normalize(v);
         XMFLOAT4 dir;
         XMStoreFloat4(&dir, v);
-        //g_ShadowDir = { dir.x, dir.y, dir.z };
+        g_ShadowDir = { dir.x, dir.y, dir.z };
 
         g_LightManager.SetDirectionalWorld(dir, { 0.5f, 0.5f, 0.5f, 1.0f });
     }
@@ -192,6 +199,7 @@ namespace
         g_modelTest2 = ModelAsset_Load("resources/oldfurniture/OldFurniturePack_new.fbx", true, 0.03f);
         g_modelMaterial = ModelAsset_Load("resources/materialTestBall.fbx", true, 100.0f);
     }
+
     static void InitPlayerAndEnv()
     {
         SceneManager::Clear();
@@ -239,13 +247,12 @@ namespace
     {
         g_PickingReady = g_PickingPass.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
         g_OutlineReady = g_OutlinePost.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
-        /*
-        g_ShadowReady = g_ShadowPass.Initialize(Direct3D_GetDevice(), 2048, 3);
+        
+        g_ShadowReady = g_ShadowPass.Initialize(Direct3D_GetDevice());
         if (g_ShadowReady)
         {
             g_ShadowReady = g_ShadowPass.GetLightCamera().Initialize(Direct3D_GetDevice());
         }
-        */
     }
 
     static void ShutdownPasses()
@@ -260,14 +267,12 @@ namespace
             g_OutlinePost.Finalize();
             g_OutlineReady = false;
         }
-        /*
         if (g_ShadowReady)
         {
             g_ShadowPass.GetLightCamera().Finalize();
             g_ShadowPass.Finalize();
             g_ShadowReady = false;
         }
-        */
     }
 
     static void ShutdownAssets()
@@ -333,7 +338,6 @@ namespace
         }
     }
 
-    /*
     static void RunShadowPass()
     {
         if (!g_ShadowReady) return;
@@ -343,7 +347,7 @@ namespace
         // update light camera matrix
         XMFLOAT3 target = { 0.0f, 0.0f, 0.0f };
 
-        float distance = 25.0f;
+        float distance = 15.0f;
         float orthoW = 40.0f;
         float orthoH = 40.0f;
         float nearZ = 0.1f;
@@ -372,7 +376,6 @@ namespace
 
         g_ShadowPass.End(ctx);
     }
-    */
 
     static void RunPickingPass(const XMMATRIX& view, const XMMATRIX& proj)
     {

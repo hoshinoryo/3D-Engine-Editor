@@ -47,8 +47,9 @@ cbuffer PS_CONSTANT_BUFFER : register(b4)
 cbuffer ShadowPS_CONSTANT_BUFFER : register(b5)
 {
     float4x4 lightViewProj;
-    float shadowBias;
-    float3 shadowDummyPS;
+    float    shadowBias;
+    float    shadowStrength;
+    float2   shadowTexelSize;
 };
 
 struct PS_IN
@@ -67,37 +68,61 @@ struct PS_IN
 Texture2D diffTex   : register(t0);  // diffuse texture
 Texture2D normalTex : register(t1);
 Texture2D specTex   : register(t2);
-Texture2D<float> shadowMap : register(t3);
+Texture2D shadowMap : register(t7);
 
 SamplerState samp : register(s0); // テクスチャサンプラ
-SamplerComparisonState shadowSamp : register(s1);
+SamplerComparisonState shadowSamp : register(s7);
 
 
 float2 ShadowUV(float4 posLightH)
 {
-    float3 ndc = posLightH.xyz / posLightH.w;
-    return ndc.xy * float2( 0.5f, -0.5f ) + 0.5f;
+    float2 uv = posLightH.xy / posLightH.w;
+    uv.x = uv.x * 0.5f + 0.5f;
+    uv.y = uv.y * -0.5f + 0.5f;
+    return uv;
 }
 
 float ShadowDepth(float4 posLightH)
 {
-    float3 ndc = posLightH / posLightH.w;
-    return ndc.z * 0.5f + 0.5f;
+    //float3 ndc = posLightH / posLightH.w;
+    return posLightH.z / posLightH.w;
 }
 
-float CalcShadow(float4 posLightH)
+float CalcShadow(float4 posLightH, float3 normalW)
 {
-    if (posLightH.w <= 0.0f)
+    if (posLightH.w <= 1e-4f)
         return 1.0f;
     
     float2 uv = ShadowUV(posLightH);
     float depth = ShadowDepth(posLightH);
     
-    if (uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) return 1.0f;
+    if (uv.x <= 0.0f || uv.x >= 1.0f || uv.y <= 0.0f || uv.y >= 1.0f || depth <= 0.0f || depth >= 1.0f)
+        return 1.0f;
     
-    //return shadowMap.SampleCmpLevelZero(shadowSamp, uv, depth - shadowBias);
-    return shadowMap.Sample(samp, uv);
+    // slope-scaled bias
+    float3 N = normalize(normalW);
+    float3 L = normalize(-directional_world_vector.xyz);
+    
+    float ndotl = saturate(dot(N, L));
+    
+    float base = shadowBias;
+    float bias = base * (1.0f - ndotl) + base * 0.25f;
+    
+    float sum = 0.0f;
+    [unroll]
+    for (int y = -1; y <= 1; y++)
+    {
+        [unroll]
+        for (int x = -1; x <= 1; x++)
+        {
+            float2 o = float2(x, y) * shadowTexelSize;
+            sum += shadowMap.SampleCmpLevelZero(shadowSamp, uv + o, depth - bias);
 
+        }
+    }
+    
+    //return shadowMap.SampleCmpLevelZero(shadowSamp, uv, depth - bias);
+    return sum / 9.0f;
 }
 
 
@@ -115,15 +140,16 @@ float4 main(PS_IN pi) : SV_TARGET
     // TBN space
     float3 N = normalize(pi.normalW.xyz);
     float3 T = normalize(pi.tangentW);
-    float3 B = normalize(cross(N, T));
-    
+    T = normalize(T - N * dot(T, N));
+    float3 B = cross(N, T);
     float3 normalW = normalize(mul(nTS, float3x3(T, B, N)));
     
     float3 V = normalize(eye_posW - pi.posW.xyz);
     
-    // Shadow
-    //float shadow = CalcShadow(pi.posLightH);
-    float shadow = 1.0f;
+    // ---- Shadow ----
+    //float shadow = CalcShadow(pi.posLightH, normalW);
+    float vis = CalcShadow(pi.posLightH, normalW);
+    float shadowTerm = lerp(1.0f, vis, shadowStrength);
     
     // ---- Ambient Light ----
     float3 ambient = material_color * ambient_color.rgb;
@@ -131,12 +157,12 @@ float4 main(PS_IN pi) : SV_TARGET
     // ---- Directional Light ----
     float3 LightDir = normalize(-directional_world_vector.xyz); // from pixel to light
     float dl = max(0.0f, dot(LightDir, normalW));
-    float3 diffuse = material_color * directional_color.rgb * dl * shadow;
+    float3 diffuse = material_color * directional_color.rgb * dl * shadowTerm;
     
     // ---- Specular Light ----
     float3 r = reflect(-LightDir, normalW);
     float t = pow(saturate(dot(r, V)), specular_power);
-    float3 specular = specular_color.rgb * specSamp * t * shadow;
+    float3 specular = specular_color.rgb * specSamp * t * shadowTerm;
 
     // final color
     float3 color = ambient + diffuse + specular;

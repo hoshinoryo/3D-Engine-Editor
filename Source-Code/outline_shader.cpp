@@ -131,7 +131,7 @@ bool OutlineShader::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCont
 void OutlineShader::Finalize()
 {
 	SAFE_RELEASE(m_SS_PointSampler);
-	SAFE_RELEASE(m_BS_AlphaBlend)
+	SAFE_RELEASE(m_BS_AlphaBlend);
 	SAFE_RELEASE(m_DSS_NoDepth);
 	SAFE_RELEASE(m_RS);
 

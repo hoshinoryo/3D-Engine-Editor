@@ -75,9 +75,7 @@ int APIENTRY WinMain(
 	Scene_Initialize();
 
 	Demo_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
-	//Grid_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
 	Draw3d_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
-	//Outline_Initialize(Direct3D_GetDevice(), Direct3D_GetContext());
 
 	// Debug Mode
 #if defined(DEBUG) || defined(_DEBUG)
@@ -166,8 +164,6 @@ int APIENTRY WinMain(
 
 	Animation_ReleaseSkinningCB();
 
-	//Outline_Finalize();
-	//Grid_Finalize();
 	Draw3d_Finalize();
 	Demo_Finalize();
 	Scene_Finalize();
