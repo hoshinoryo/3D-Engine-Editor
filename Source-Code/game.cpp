@@ -373,6 +373,10 @@ namespace
             ModelRenderer_DrawDepth(obj.asset, obj.meshIndex, world);
         }
 
+        g_Player.DrawDepth();
+
+        Demo_DrawShadow();
+
         g_ShadowPass.End(ctx);
     }
 

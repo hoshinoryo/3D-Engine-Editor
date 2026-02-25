@@ -133,9 +133,7 @@ void Player::Draw(const XMFLOAT3& cameraPosition)
 	XMMATRIX modelFix = XMMatrixRotationY(XM_PI);
 
 	XMMATRIX trans = XMMatrixTranslationFromVector(pos);
-	//XMMATRIX scale = XMMatrixScaling(1.0f, 1.0f, 1.0f);
 
-	//XMMATRIX world = modelFix * scale * rot * trans;
 	XMMATRIX world = modelFix * rot * trans;
 
 	if (m_AnimPlayer)
@@ -155,7 +153,41 @@ void Player::Draw(const XMFLOAT3& cameraPosition)
 	{
 		Collision_DebugDraw(m_WorldAABB, { 0.0f, 0.0f, 1.0f, 1.0f });
 	}
+}
 
+void Player::DrawDepth()
+{
+	if (!m_Asset) return;
+
+	XMVECTOR pos = XMLoadFloat3(&m_Position);
+	XMVECTOR front = XMLoadFloat3(&m_Front);
+
+	if (XMVector3Equal(front, XMVectorZero()))
+	{
+		front = XMVectorSet(0, 0, 1, 0);
+	}
+
+	front = XMVectorSetY(front, 0.0f);
+	front = XMVector3Normalize(front);
+
+	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
+	XMMATRIX rot = XMMatrixInverse(nullptr, XMMatrixLookToLH(XMVectorZero(), front, up));
+	XMMATRIX modelFix = XMMatrixRotationY(XM_PI);
+	XMMATRIX trans = XMMatrixTranslationFromVector(pos);
+	XMMATRIX world = modelFix * rot * trans;
+
+	if (m_AnimPlayer)
+	{
+		Animation_UpdateSkinningCB(*m_AnimPlayer);
+	}
+
+	for (uint32_t mi = 0; mi < (uint32_t)m_Asset->meshes.size(); ++mi)
+	{
+		XMMATRIX nodeToModel = XMLoadFloat4x4(&m_Asset->meshes[mi].nodeToModel);
+		XMMATRIX finalWorld = nodeToModel * world;
+
+		ModelRenderer_DrawDepth(m_Asset, mi, finalWorld);
+	}
 }
 
 void Player::SetState(AnimState state)

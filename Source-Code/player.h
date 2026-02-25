@@ -43,6 +43,7 @@ public:
 	void UpdateAnimationOnly(double elapsed_time);
 
 	void Draw(const DirectX::XMFLOAT3& cameraPosition);
+	void DrawDepth();
 
 	const DirectX::XMFLOAT3& GetPosition() const { return m_Position; }
 	void SetPosition(const DirectX::XMFLOAT3& pos) { m_Position = pos; }

@@ -32,6 +32,7 @@ public:
 
 	void UpdateAABB();
 	void Draw() const;
+	void DrawDepth() const;
 
 private:
 
@@ -46,6 +47,7 @@ private:
 void Cube_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext, float halfExtent = 1.0f);
 void Cube_Finalize(void);
 void Cube_DrawMesh(const DirectX::XMMATRIX& mtxWorld);
+void Cube_DrawDepth(const DirectX::XMMATRIX& mtxWorld);
 
 ID3D11Buffer* Cube_GetVB();
 ID3D11Buffer* Cube_GetIB();

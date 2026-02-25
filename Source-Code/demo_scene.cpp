@@ -77,6 +77,21 @@ void Demo_Draw()
 	PrimitiveTool::Draw();
 }
 
+void Demo_DrawShadow()
+{
+	for (const auto& c : g_groundCubes)
+	{
+		c.DrawDepth();
+	}
+
+	for (const auto& c : g_wallCubes)
+	{
+		c.DrawDepth();
+	}
+
+	PrimitiveTool::DrawDepth();
+}
+
 void Demo_UpdateWorldAABB()
 {
 	for (auto& c : g_groundCubes)

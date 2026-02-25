@@ -17,6 +17,7 @@
 void Demo_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext);
 void Demo_Finalize(void);
 void Demo_Draw();
+void Demo_DrawShadow();
 
 void Demo_UpdateWorldAABB();
 void Demo_AddColliders();

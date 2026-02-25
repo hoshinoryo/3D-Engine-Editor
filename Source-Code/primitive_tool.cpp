@@ -169,6 +169,14 @@ void PrimitiveTool::Draw()
 	}
 }
 
+void PrimitiveTool::DrawDepth()
+{
+	for (auto& p : g_Cubes)
+	{
+		p.cube.DrawDepth();
+	}
+}
+
 void PrimitiveTool::UpdateAABB()
 {
 	for (auto& p : g_Cubes)

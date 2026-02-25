@@ -36,6 +36,8 @@ namespace PrimitiveTool
 	bool PickFromMouse(const CameraBase& cam, int mouseX, int mouseY);
 
 	void Draw();
+	void DrawDepth();
+
 	void UpdateAABB();
 
 	void AppendColliders();

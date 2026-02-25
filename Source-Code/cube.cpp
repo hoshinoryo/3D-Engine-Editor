@@ -149,6 +149,27 @@ void Cube_DrawMesh(const XMMATRIX& mtxWorld)
 	g_pContext->DrawIndexed(NUM_INDEX, 0, 0);
 }
 
+void Cube_DrawDepth(const DirectX::XMMATRIX& mtxWorld)
+{
+	g_Default3DshaderStatic.Begin();
+	g_Default3DshaderStatic.SetWorldMatrix(mtxWorld);
+
+	//g_Default3DshaderStatic.SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+
+	//g_CubeTex.SetTexture();
+
+	UINT stride = sizeof(VertexCube);
+	UINT offset = 0;
+
+	g_pContext->PSSetShader(nullptr, nullptr, 0);
+	g_pContext->IASetVertexBuffers(0, 1, &g_pVertexBuffer, &stride, &offset);
+	g_pContext->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	g_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// ポリゴン描画命令発行
+	g_pContext->DrawIndexed(NUM_INDEX, 0, 0);
+}
+
 ID3D11Buffer* Cube_GetVB()
 {
 	return g_pVertexBuffer;
@@ -212,4 +233,12 @@ void CubeObject::Draw() const
 		* XMMatrixTranslation(m_Position.x, m_Position.y, m_Position.z);
 
 	Cube_DrawMesh(world);
+}
+
+void CubeObject::DrawDepth() const
+{
+	const XMMATRIX world = XMMatrixScaling(m_Scale.x, m_Scale.y, m_Scale.z)
+		* XMMatrixTranslation(m_Position.x, m_Position.y, m_Position.z);
+
+	Cube_DrawDepth(world);
 }
