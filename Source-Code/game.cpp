@@ -82,7 +82,6 @@ static OutlinePostPass g_OutlinePost;
 static bool g_OutlineReady = false;
 
 // Shadow pass
-//ShadowPass g_ShadowPass;
 static bool g_ShadowReady = false;
 static XMFLOAT3 g_ShadowDir = { 0.0f, -1.0f, 0.0f };
 
@@ -157,6 +156,7 @@ void Game_Draw()
     {
         g_ShadowPass.PrepareForMainPass(Direct3D_GetContext());
     }
+
     DrawAllMeshObjects(camPos);
     DrawRest(camPos);
 
@@ -248,7 +248,7 @@ namespace
         g_PickingReady = g_PickingPass.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
         g_OutlineReady = g_OutlinePost.Initialize(Direct3D_GetBackBufferWidth(), Direct3D_GetBackBufferHeight());
         
-        g_ShadowReady = g_ShadowPass.Initialize(Direct3D_GetDevice());
+        g_ShadowReady = g_ShadowPass.Initialize(Direct3D_GetDevice(), 1024, 7);
         if (g_ShadowReady)
         {
             g_ShadowReady = g_ShadowPass.GetLightCamera().Initialize(Direct3D_GetDevice());
@@ -344,17 +344,16 @@ namespace
         ID3D11DeviceContext* ctx = Direct3D_GetContext();
         if (!ctx) return;
 
-        // update light camera matrix
-        XMFLOAT3 target = { 0.0f, 0.0f, 0.0f };
+        XMFLOAT3 lightDir = g_LightManager.GetDirection3();
 
-        float distance = 15.0f;
-        float orthoW = 40.0f;
-        float orthoH = 40.0f;
-        float nearZ = 0.1f;
-        float farZ = 80.0f;
+        // light camera setting
+        XMFLOAT3 target = { 0.0f, 0.0f, 0.0f };
+        float distance = 40.0f;
+        float orthoSize = 60.0f;
 
         auto& lightCam = g_ShadowPass.GetLightCamera();
-        lightCam.UpdateDirectional(g_ShadowDir, target, distance, orthoW, orthoH, nearZ, farZ);
+
+        lightCam.UpdateDirectional(lightDir, target, distance, orthoSize, orthoSize, 0.1f, 100.0f);
         lightCam.Upload();
 
         g_ShadowPass.Begin(ctx);

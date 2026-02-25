@@ -27,15 +27,6 @@ struct DirectionalLightData
 	DirectX::XMFLOAT4 Color;
 };
 
-/*
-struct SpecularLightData
-{
-	DirectX::XMFLOAT3 CameraPosition;
-	float Power;
-	DirectX::XMFLOAT4 Color;
-};
-*/
-
 struct PointLightData // for single point light
 {
 	DirectX::XMFLOAT3 LightPosition;
@@ -59,16 +50,14 @@ private:
 
 	ID3D11Buffer* g_pPSConstantBuffer1 = nullptr; // ambient color for pixel shader
 	ID3D11Buffer* g_pPSConstantBuffer2 = nullptr; // directional light
-	//ID3D11Buffer* g_pPSConstantBuffer3 = nullptr; // specular light
 	ID3D11Buffer* g_pPSConstantBuffer4 = nullptr; // point light
 
 	AmbientLightData m_AmbientData{};
 	DirectionalLightData m_DirectionalData{};
-	//SpecularLightData m_SpecularData{};
 	PointLightList m_PointLights{};
 
 	// Directional light initial direction
-	DirectX::XMFLOAT3 m_DirBase = { 1.0f, -1.0f, 0.0f };
+	DirectX::XMFLOAT3 m_DirBase = { 0.0f, 0.0f, 1.0f };
 	// For UI
 	float m_DirYawDeg = 0.0f;
 	float m_DirPitchDeg = 0.0f;
@@ -82,7 +71,13 @@ public:
 	void Finalize();
 
 	void SetAmbient(const DirectX::XMFLOAT4& color);
+
 	void SetDirectionalWorld(const DirectX::XMFLOAT4& directional, const DirectX::XMFLOAT4& color);
+	void SetDirectionalAngles(float yawDeg, float pitchDeg);
+	DirectX::XMFLOAT3 GetDirection3() const {
+		return { m_DirectionalData.Directional.x, m_DirectionalData.Directional.y, m_DirectionalData.Directional.z };
+	}
+	void SyncDirectionalAnglesFromCurrent();
 
 	void SetPointLightCount(int count);
 	void SetPointLight(

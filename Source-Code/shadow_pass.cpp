@@ -8,6 +8,8 @@
 
 ==============================================================================*/
 
+//#pragma message("COMPILING shadow_pass.cpp in this project")
+
 #include <cstring>
 
 #include "shadow_pass.h"

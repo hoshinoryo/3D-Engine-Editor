@@ -136,17 +136,11 @@ bool Default3DShader::Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pCo
 	buffer_desc.ByteWidth = sizeof(SpecularData); // Specular pixel constant buffer
 	m_pDevice->CreateBuffer(&buffer_desc, nullptr, &m_pPSConstantBuffer3);
 
-	/*
-	buffer_desc.ByteWidth = sizeof(ShadowConstantBuffer);
-	m_pDevice->CreateBuffer(&buffer_desc, nullptr, &m_pPSConstantBuffer5);
-	*/
-
 	return true;
 }
 
 void Default3DShader::Finalize()
 {
-	//SAFE_RELEASE(m_pPSConstantBuffer5);
 	SAFE_RELEASE(m_pPSConstantBuffer3);
 	SAFE_RELEASE(m_pPSConstantBuffer0);
 	SAFE_RELEASE(m_pVSConstantBufferWorld);
@@ -182,13 +176,6 @@ void Default3DShader::UpdateSpecularParams(XMFLOAT3 cameraPos, float power, cons
 	m_pContext->UpdateSubresource(m_pPSConstantBuffer3, 0, nullptr, &data, 0, 0);
 }
 
-/*
-void Default3DShader::UpdateShadowParams(const ShadowConstantBuffer& cb)
-{
-	m_pContext->UpdateSubresource(m_pPSConstantBuffer5, 0, nullptr, &cb, 0, 0);
-}
-*/
-
 void Default3DShader::Begin()
 {
 	// 頂点シェーダーとピクセルシェーダーを描画パイプラインに設定
@@ -203,7 +190,6 @@ void Default3DShader::Begin()
 
 	m_pContext->PSSetConstantBuffers(0, 1, &m_pPSConstantBuffer0);
 	m_pContext->PSSetConstantBuffers(3, 1, &m_pPSConstantBuffer3);
-	//m_pContext->PSSetConstantBuffers(5, 1, &m_pPSConstantBuffer5);
 }
 
 void Default3DShader::BeginDepthOnly()

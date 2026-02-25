@@ -33,7 +33,6 @@ private:
 	// PS constant buffer
 	ID3D11Buffer* m_pPSConstantBuffer0 = nullptr; // diffuse color for pixel shader
 	ID3D11Buffer* m_pPSConstantBuffer3 = nullptr; // specular color for pixel shader
-	//ID3D11Buffer* m_pPSConstantBuffer5 = nullptr; // shadow for pixel shader
 
 public:
 
@@ -58,13 +57,9 @@ public:
 
 	void UpdateSpecularParams(DirectX::XMFLOAT3 cameraPos, float power, const DirectX::XMFLOAT4& color);
 
-	//void UpdateShadowParams(const ShadowConstantBuffer& cb);
-
 	ID3D11VertexShader* GetVertexShader() const { return m_pVertexShader; }
 	ID3D11PixelShader* GetPixelShader() const { return m_pPixelShader; }
 	ID3D11InputLayout* GetInputLayout() const { return m_pInputLayout; }
-
-	//void DebugDraw(DirectX::XMFLOAT3 cameraPos);
 };
 
 extern Default3DShader g_Default3DshaderStatic;

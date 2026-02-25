@@ -56,14 +56,10 @@ void Sampler_Initialize(ID3D11Device* pDevice, ID3D11DeviceContext* pContext)
 
 	// Shadow map sampler describution
 	D3D11_SAMPLER_DESC shadow_desc{};
-	shadow_desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	shadow_desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
 	shadow_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP; // out of border pass
 	shadow_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	shadow_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	shadow_desc.BorderColor[0] = 1.0f; // out of border equals out of shadow
-	shadow_desc.BorderColor[1] = 1.0f;
-	shadow_desc.BorderColor[2] = 1.0f;
-	shadow_desc.BorderColor[3] = 1.0f;
 	shadow_desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
 	shadow_desc.MinLOD = 0;
 	shadow_desc.MaxLOD = D3D11_FLOAT32_MAX;

@@ -196,7 +196,6 @@
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="scene_manager.cpp" />
     <ClCompile Include="shadow_pass.cpp" />
-    <ClCompile Include="shadow_pass.h" />
     <ClCompile Include="skeleton.cpp" />
     <ClCompile Include="skeleton_util.cpp" />
     <ClCompile Include="skydome.cpp" />
@@ -267,6 +266,7 @@
     <ClInclude Include="sampler.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="scene_manager.h" />
+    <ClInclude Include="shadow_pass.h" />
     <ClInclude Include="skeleton.h" />
     <ClInclude Include="skeleton_util.h" />
     <ClInclude Include="skydome.h" />

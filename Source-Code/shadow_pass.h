@@ -121,3 +121,17 @@ private:
 extern ShadowPass g_ShadowPass;
 
 #endif // SHADOW_PASS
+
+/*==============================================================================
+	Shadow Mapping Principle
+
+		Light View Pass:
+			World -> Light Camera -> Depth -> Shadow Map
+
+		Main Pass:
+			Pixel -> Light Space
+				   -> Compare with Shadow Map
+
+			depth > storedDepth  -> Shadow
+			depth == storedDepth -> Light
+==============================================================================*/

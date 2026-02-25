@@ -96,6 +96,7 @@ float CalcShadow(float4 posLightH, float3 normalW)
     float2 uv = ShadowUV(posLightH);
     float depth = ShadowDepth(posLightH);
     
+    // out of border equals out of shadow
     if (uv.x <= 0.0f || uv.x >= 1.0f || uv.y <= 0.0f || uv.y >= 1.0f || depth <= 0.0f || depth >= 1.0f)
         return 1.0f;
     
@@ -121,7 +122,6 @@ float CalcShadow(float4 posLightH, float3 normalW)
         }
     }
     
-    //return shadowMap.SampleCmpLevelZero(shadowSamp, uv, depth - bias);
     return sum / 9.0f;
 }
 

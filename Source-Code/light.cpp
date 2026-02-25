@@ -9,6 +9,8 @@
 ==============================================================================*/
 
 #include <cstdio>
+#include <cmath>
+#include <algorithm>
 
 #include "light.h"
 #include "direct3d.h"
@@ -61,6 +63,33 @@ void LightManager::SetDirectionalWorld(const XMFLOAT4& directional, const XMFLOA
 {
 	m_DirectionalData.Directional = directional;
 	m_DirectionalData.Color = color;
+	SyncDirectionalAnglesFromCurrent();
+}
+
+void LightManager::SetDirectionalAngles(float yawDeg, float pitchDeg)
+{
+	m_DirYawDeg = yawDeg;
+	m_DirPitchDeg = pitchDeg;
+	UpdateDirectionalFromAngle();
+}
+
+void LightManager::SyncDirectionalAnglesFromCurrent()
+{
+	XMFLOAT4 d4 = m_DirectionalData.Directional;
+	XMVECTOR v = XMVectorSet(d4.x, d4.y, d4.z, 0.0f);
+	v = XMVector3Normalize(v);
+
+	XMFLOAT3 d;
+	XMStoreFloat3(&d, v);
+
+	float yaw = std::atan2(d.z, d.x);
+	float pitch = std::atan2(-d.y, std::sqrt(d.x * d.x + d.z * d.z));
+
+	m_DirYawDeg = XMConvertToDegrees(yaw);
+	m_DirPitchDeg = XMConvertToDegrees(pitch);
+
+	m_DirYawDeg = WrapDeg360(m_DirYawDeg);
+	m_DirPitchDeg = WrapDeg360(m_DirPitchDeg);
 }
 
 void LightManager::SetPointLightCount(int count)
@@ -136,7 +165,11 @@ void LightManager::DebugDraw()
 		changed |= ImGui::DragFloat("Yaw", &m_DirYawDeg, 1.0f, 0.0, 360.0f);
 		changed |= ImGui::DragFloat("Pitch", &m_DirPitchDeg, 1.0f, 0.0, 360.0f);
 
-		if (changed) UpdateDirectionalFromAngle();
+		if (changed)
+		{
+			// Update directional light vector from yaw/pitch
+			UpdateDirectionalFromAngle();
+		}
 
 		ImGui::Text("Direction = (%.3f, %.3f, %.3f)",
 			m_DirectionalData.Directional.x,
@@ -195,23 +228,29 @@ void LightManager::DebugDrawPointLight() const
 void LightManager::UpdateDirectionalFromAngle()
 {
 	m_DirYawDeg = WrapDeg360(m_DirYawDeg);
-	m_DirPitchDeg = WrapDeg360(m_DirPitchDeg);
+	m_DirPitchDeg = std::max(-89.0f, std::min(89.0f, m_DirPitchDeg));
 
-	const float yaw = XMConvertToRadians(m_DirYawDeg);
-	const float pitch = XMConvertToRadians(m_DirPitchDeg);
+	//const float yaw = XMConvertToRadians(m_DirYawDeg);
+	//const float pitch = XMConvertToRadians(m_DirPitchDeg);
 
-	XMVECTOR base = XMVector3Normalize(XMLoadFloat3(& m_DirBase));
+	// restruction
+	//XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
+	//XMVECTOR baseDir = XMVector3Normalize(XMLoadFloat3(&m_DirBase));
+	//XMVECTOR newDir = XMVector3TransformNormal(baseDir, rotation);
 
-	XMMATRIX R = XMMatrixRotationRollPitchYaw(pitch, yaw, 0.0f);
+	const float yawRad = XMConvertToRadians(m_DirYawDeg);
+	const float pitchRad = XMConvertToRadians(m_DirPitchDeg);
 
-	XMVECTOR dir = XMVector3TransformNormal(base, R);
-	dir = XMVector3Normalize(dir);
+	float cosP = cosf(pitchRad);
+	m_DirectionalData.Directional.x = cosP * sinf(yawRad);
+	m_DirectionalData.Directional.y = -sinf(pitchRad);
+	m_DirectionalData.Directional.z = cosP * cosf(yawRad);
 
-	XMFLOAT3 d3;
-	XMStoreFloat3(&d3, dir);
-	m_DirectionalData.Directional = { d3.x, d3.y, d3.z, 0.0f };
+	//XMStoreFloat4(&m_DirectionalData.Directional, XMVector3Normalize(newDir));
+	m_DirectionalData.Directional.w = 0.0f;
 }
 
+// Draw directional light guide line
 void LightManager::DebugDrawDirectionalLight() const
 {
 	if (!DebugDraw_Allow(DebugDrawCategory::Light))
